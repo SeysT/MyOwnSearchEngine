@@ -11,6 +11,18 @@ collection).
 5. Question 5 : Tracer le graphe fréquence (f ) vs rang (r) pour tous les tokens de la collection. Tracer
 aussi le graphe log(f ) vs log(r).
 
+## ODG sur les collections données
+
+### CACM
+- nb_tokens = 100 000 ... 250000
+- taille_voc = 9 000
+- k = 20 ... 40
+- b = 0,4 ... 0,5
+
+### Stanford
+- nb_tokens = 25 000 000
+- taille_voc = 400 000
+
 ## TODO
 1. Traiter la colection CACM
 1. Identifier documents, puis les opérandes
