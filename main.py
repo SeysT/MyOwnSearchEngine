@@ -1,5 +1,4 @@
 from document import Document
-from nltk.tokenize import word_tokenize
 
 data_filename = 'Data/CACM/cacm.all'
 stop_list_filename = 'Data/CACM/common_words'
@@ -15,16 +14,19 @@ fields_mapping = {
     '.C': 'citations',
 }
 
-document_collection = {}
-common_words = []
 
+def create_document_collection():
+    document_collection = {}
 
-def populate_document_collection():
     with open(data_filename, 'r') as df:
         data = df.read()
 
+    current_id = None
     for line in data.split('\n'):
         if line.startswith('.I'):
+            if current_id:
+                document_collection[current_id].tokenize_doc()
+                document_collection[current_id].clean_tokens(common_words)
             current_id = line.replace('.I ', '')
             document_collection[current_id] = Document(current_id)
         elif line in fields_mapping.keys():
@@ -37,10 +39,13 @@ def populate_document_collection():
                 attr,
                 '{}\n{}'.format(attr_value, to_add) if attr_value else to_add
             )
+
     return document_collection
 
 
-def populate_common_words_set():
+def create_common_words_set():
+    common_words = []
+
     with open(stop_list_filename, 'r') as sl:
         data = sl.read()
 
@@ -50,23 +55,9 @@ def populate_common_words_set():
     return common_words
 
 
-def tokenize_collection(document_collection):
-    for el in document_collection.values():
-        el.tokenize_doc()
-
-
-def clean_document_collection(document_collection, common_words):
-    for el in document_collection.values():
-        el.clean_tokens(common_words)
-
-
 if __name__ == '__main__':
-    populate_document_collection()
-    populate_common_words_set()
+    common_words = create_common_words_set()
+    document_collection = create_document_collection()
     test = document_collection['1765']
-
-    tokenize_collection(document_collection)
-    print(test)
-    clean_document_collection(document_collection, common_words)
 
     print(test)
