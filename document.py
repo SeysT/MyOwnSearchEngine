@@ -1,9 +1,20 @@
 from nltk.tokenize import word_tokenize
 
+fields_mapping = {
+    '.T': 'title',
+    '.W': 'summary',
+    '.B': 'publication_date',
+    '.A': 'authors',
+    '.N': 'add_date',
+    '.X': 'references',
+    '.K': 'key_words',
+    '.C': 'citations',
+}
+
 
 class Document(object):
 
-    tokenized_fields = ('title_tokenized', 'summary_tokenized', 'key_words_tokenized')
+    tokenized_fields = ['title_tokenized', 'summary_tokenized', 'key_words_tokenized']
     signs_to_remove = [',', '\'', ';', ':', '.', '?', '!']
 
     def __init__(self, id):
@@ -21,23 +32,18 @@ class Document(object):
         self.citations = ''
 
     def tokenize_doc(self):
-        self.title_tokenized = word_tokenize(self.title)
-        self.summary_tokenized = word_tokenize(self.summary)
-        self.key_words_tokenized = word_tokenize(self.key_words)
+        for attr in Document.tokenized_fields:
+            setattr(
+                self,
+                attr,
+                word_tokenize(getattr(self, attr.replace('_tokenized', '')))
+            )
 
     def clean_tokens(self, common_words):
-
-        for token in self.title_tokenized:
-            if token in common_words or token in Document.signs_to_remove:
-                self.title_tokenized.remove(token)
-
-        for token in self.summary_tokenized:
-            if token in common_words or token in Document.signs_to_remove:
-                self.summary_tokenized.remove(token)
-
-        for token in self.key_words_tokenized:
-            if token in common_words or token in Document.signs_to_remove:
-                self.key_words_tokenized.remove(token)
+        for attr in Document.tokenized_fields:
+            for token in getattr(self, attr):
+                if token in common_words or token in Document.signs_to_remove:
+                    getattr(self, attr).remove(token)
 
     def __repr__(self):
         return "DOCID : {}\nTITLE : {}\nSUMMARY : {}\nKEYWORDS : {}".format(self.id, self.title_tokenized, self.summary_tokenized, self.key_words_tokenized)
