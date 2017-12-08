@@ -14,7 +14,11 @@ fields_mapping = {
 
 class Document(object):
 
-    tokenized_fields = ['title_tokenized', 'summary_tokenized', 'key_words_tokenized']
+    tokenized_fields = [
+        'title_tokenized',
+        'summary_tokenized',
+        'key_words_tokenized'
+    ]
     signs_to_remove = [',', '\'', ';', ':', '.', '?', '!']
 
     def __init__(self, id):
@@ -41,9 +45,20 @@ class Document(object):
 
     def clean_tokens(self, common_words):
         for attr in Document.tokenized_fields:
-            for token in getattr(self, attr):
-                if token in common_words or token in Document.signs_to_remove:
-                    getattr(self, attr).remove(token)
+            new_attr_value = [
+                token.lower()
+                for token in getattr(self, attr)
+                if not (
+                    token.lower() in common_words or
+                    token.lower() in Document.signs_to_remove
+                )
+            ]
+            setattr(self, attr, new_attr_value)
 
     def __repr__(self):
-        return "DOCID : {}\nTITLE : {}\nSUMMARY : {}\nKEYWORDS : {}".format(self.id, self.title_tokenized, self.summary_tokenized, self.key_words_tokenized)
+        return "DOCID : {}\nTITLE : {}\nSUMMARY : {}\nKEYWORDS : {}".format(
+            self.id,
+            self.title_tokenized,
+            self.summary_tokenized,
+            self.key_words_tokenized
+        )
