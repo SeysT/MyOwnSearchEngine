@@ -3,16 +3,15 @@ from math import log
 import numpy as np
 import matplotlib.pyplot as plt
 
-from document import CACMDocumentCollection
+from models.document import CACMDocumentCollection
 
 
 if __name__ == '__main__':
     document_collection = CACMDocumentCollection(
         data_filename='Data/CACM/cacm.all',
         stop_list_filename='Data/CACM/common_words',
+        load_on_creation=True,
     )
-    document_collection.load_common_words()
-    document_collection.load_collection()
 
     vocabulary = document_collection.vocabulary
     token_number = document_collection.token_number
