@@ -11,6 +11,7 @@ class DocumentCollection(object):
         if load_on_creation:
             self.load_common_words()
             self.load_collection()
+            self.generate_vocabulary()
 
     def load_common_words(self):
         with open(self.stop_list_filename, 'r') as sl:
@@ -21,30 +22,28 @@ class DocumentCollection(object):
     def load_collection(self):
         raise NotImplementedError
 
-    @property
-    def vocabulary(self):
-        vocabulary = {}
+    def generate_vocabulary(self):
+        self._generate_vocabulary()
+        self._generate_vocabulary_size()
+        self._generate_token_number()
+
+    def _generate_vocabulary(self):
+        self.vocabulary = {}
         for document in self.collection.values():
             for attr in document.tokenized_fields:
                 for token in getattr(document, attr):
                     try:
-                        vocabulary[token] += 1
+                        self.vocabulary[token] += 1
                     except KeyError:
-                        vocabulary[token] = 1
+                        self.vocabulary[token] = 1
 
-        return vocabulary
+    def _generate_vocabulary_size(self):
+        self.vocabulary_size = len(self.vocabulary.keys())
 
-    @property
-    def vocabulary_size(self):
-        return len(self.vocabulary.keys())
-
-    @property
-    def token_number(self):
-        token_number = 0
+    def _generate_token_number(self):
+        self.token_number = 0
         for frequence in self.vocabulary.values():
-            token_number += frequence
-
-        return token_number
+            self.token_number += frequence
 
 
 class CACMDocumentCollection(DocumentCollection):

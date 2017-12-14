@@ -1,7 +1,7 @@
-from math import log
-
 import numpy as np
 import matplotlib.pyplot as plt
+
+from math import log
 
 from models.document import CACMDocumentCollection
 
@@ -28,6 +28,7 @@ if __name__ == '__main__':
         for key, value
         in list(document_collection.collection.items())[:len(document_collection.collection) // 2]
     }
+    half_document_collection.generate_vocabulary()
 
     half_vocabulary = half_document_collection.vocabulary
     half_token_number = half_document_collection.token_number
