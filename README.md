@@ -48,7 +48,7 @@ Grâce aux paramètres obtenus à la question précédente, si la collection CAC
 
 **Question 5 :**
 
-![Graphe des fréquences en fonction du rang de chaque token de la collection](https://github.com/SeysT/MyOwnSearchEngine/blob/tseys/ReverseIndex/Data/Answers/cacm_answer_question_5.png)
+![Graphe des fréquences en fonction du rang de chaque token de la collection](https://github.com/SeysT/MyOwnSearchEngine/blob/master/Data/Answers/cacm_answer_question_5.png)
 
 ## TODO
 
