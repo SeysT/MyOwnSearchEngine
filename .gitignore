@@ -100,4 +100,8 @@ ENV/
 # mypy
 .mypy_cache/
 
+CACM/
 CS276/
+Collection/
+Index/
+temp/
