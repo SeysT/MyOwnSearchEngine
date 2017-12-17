@@ -1,9 +1,11 @@
+import pickle
+
 from nltk.tokenize import word_tokenize
 
 
 class DocumentCollection(object):
 
-    def __init__(self, data_filename='', stop_list_filename='', load_on_creation=True):
+    def __init__(self, data_filename='', stop_list_filename='', load_on_creation=False):
         self.data_filename = data_filename
         self.stop_list_filename = stop_list_filename
         self.common_words = []
@@ -12,6 +14,16 @@ class DocumentCollection(object):
             self.load_common_words()
             self.load_collection()
             self.generate_vocabulary()
+
+    def save(self, filename):
+        with open(filename, 'wb') as collection_file:
+            pickler = pickle.Pickler(collection_file)
+            pickler.dump(self.collection)
+
+    def load_from_file(self, filename):
+        with open(filename, 'rb') as collection_file:
+            depickler = pickle.Unpickler(collection_file)
+            self.collection = depickler.load()
 
     def load_common_words(self):
         with open(self.stop_list_filename, 'r') as sl:
@@ -144,7 +156,7 @@ class CACMDocument(Document):
     def __repr__(self):
         return "DOCID : {}\nTITLE : {}\nSUMMARY : {}\nKEYWORDS : {}".format(
             self.id,
-            self.title_tokenized,
-            self.summary_tokenized,
-            self.key_words_tokenized
+            self.title.replace('\n', ' '),
+            self.summary.replace('\n', ' '),
+            self.key_words.replace('\n', ' ')
         )

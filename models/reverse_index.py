@@ -14,11 +14,14 @@ class ReverseIndex(object):
         - create_index: create reverse_index from given document_collection
     """
 
-    def __init__(self):
+    def __init__(self, document_collection=None):
         """
         We init the reverse_index attribute to an empty dict.
+        If a document collection, we initialize reverse_index calling create_index method.
         """
         self.reverse_index = {}
+        if document_collection:
+            self.create_index(document_collection)
 
     def add_document(self, document):
         """
@@ -59,9 +62,9 @@ class ReverseIndex(object):
         + return:
             None
         """
-        with open(filename, 'rb') as index_file:
-            depickler = pickle.Unpickler(index_file)
-            self.reverse_index = depickler.load()
+        with open(filename, 'wb') as index_file:
+            pickler = pickle.Pickler(index_file)
+            pickler.dump(self.reverse_index)
 
     def load_from_file(self, filename):
         """
@@ -71,6 +74,6 @@ class ReverseIndex(object):
         + return:
             None
         """
-        with open(filename, 'wb') as index_file:
-            pickler = pickle.Pickler(index_file)
-            pickler.dump(self.reverse_index)
+        with open(filename, 'rb') as index_file:
+            depickler = pickle.Unpickler(index_file)
+            self.reverse_index = depickler.load()
