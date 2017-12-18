@@ -19,19 +19,19 @@ build: index_folder collection_folder requirements temp
 	python build.py
 
 temp:
-	mkdir temp/
+	mkdir -p temp/
 
 cacm_folder:
-	mkdir Data/CACM/
+	mkdir -p Data/CACM/
 
 cs276_folder:
-	mkdir Data/CS276/
+	mkdir -p Data/CS276/
 
 index_folder:
-	mkdir Data/Index/
+	mkdir -p Data/Index/
 
 collection_folder:
-	mkdir Data/Collection/
+	mkdir -p Data/Collection/
 
 .PHONY: clean mrproper
 
