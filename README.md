@@ -50,6 +50,30 @@ Grâce aux paramètres obtenus à la question précédente, si la collection CAC
 
 ![Graphe des fréquences en fonction du rang de chaque token de la collection](https://github.com/SeysT/MyOwnSearchEngine/blob/master/Data/Answers/cacm_answer_question_5.png)
 
+## Réponses aux questions pour la collection Stanford CS276
+
+Le script `stanford_question.py` nous permet de répondre aux questions du sujet pour la collection CS276.
+
+**Question 1 :**
+
+La collection contient 25 498 340 tokens.
+
+**Question 2 :**
+
+La taille du vocabulaire de la collection vaut 347 071.
+
+**Question 3 :**
+
+La première moitié de la collection CS276 contient 12 753 515 tokens et a un vocabulaire de taille 233 501. On peut alors en déduire les paramètres de la loi de Heap : k = 20,10 et b = 0,57.
+
+**Question 4 :**
+
+Grâce aux paramètres obtenus à la question précédente, si la collection CS276 contient 1 000 000 de tokens, alors la taille de son vocabulaire serait d'environ 54 422.
+
+**Question 5 :**
+
+![Graphe des fréquences en fonction du rang de chaque token de la collection](https://github.com/SeysT/MyOwnSearchEngine/blob/master/Data/Answers/cs_276_answer_question_5.png)
+
 ## TODO
 
 - [ ] Construire CLI booléen

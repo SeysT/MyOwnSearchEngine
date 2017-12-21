@@ -1,17 +1,15 @@
 import pickle
+import os
 
 from nltk.tokenize import word_tokenize
 
 
 class DocumentCollection(object):
 
-    def __init__(self, data_filename='', stop_list_filename='', load_on_creation=False):
+    def __init__(self, data_filename='', load_on_creation=False):
         self.data_filename = data_filename
-        self.stop_list_filename = stop_list_filename
-        self.common_words = []
         self.collection = {}
         if load_on_creation:
-            self.load_common_words()
             self.load_collection()
             self.generate_vocabulary()
 
@@ -24,12 +22,7 @@ class DocumentCollection(object):
         with open(filename, 'rb') as collection_file:
             depickler = pickle.Unpickler(collection_file)
             self.collection = depickler.load()
-
-    def load_common_words(self):
-        with open(self.stop_list_filename, 'r') as sl:
-            data = sl.read()
-
-        self.common_words = [line.strip() for line in data.split('\n')]
+        self.generate_vocabulary()
 
     def load_collection(self):
         raise NotImplementedError
@@ -59,6 +52,22 @@ class DocumentCollection(object):
 
 
 class CACMDocumentCollection(DocumentCollection):
+
+    def __init__(self, data_filename='', stop_list_filename='', load_on_creation=False):
+        self.stop_list_filename = stop_list_filename
+        self.common_words = []
+        if load_on_creation:
+            # needs to be done before calling the load_collection method that
+            # needs the common words to clean the tokens
+            self.load_common_words()
+        super().__init__(data_filename, load_on_creation)
+
+    def load_common_words(self):
+        with open(self.stop_list_filename, 'r') as sl:
+            data = sl.read()
+
+        self.common_words = [line.strip() for line in data.split('\n')]
+
     def load_collection(self):
         with open(self.data_filename, 'r') as df:
             data = df.read()
@@ -81,6 +90,21 @@ class CACMDocumentCollection(DocumentCollection):
                     attr,
                     '{}\n{}'.format(attr_value, to_add) if attr_value else to_add,
                 )
+
+
+class StanfordDocumentCollection(DocumentCollection):
+    def load_collection(self):
+        for directory in os.listdir(self.data_filename):
+            print("DIRECTORY", directory)
+            for filename in os.listdir(self.data_filename + '/' + directory):
+
+                with open(self.data_filename + '/' + directory + '/' + filename, 'r')as df:
+                    data = df.read()
+
+                tokens = [token for token in data.split()]
+
+                # modify document collection to add the Stanford Document
+                self.collection[filename] = StanfordDocument(filename, tokens)
 
 
 class Document(object):
@@ -159,4 +183,20 @@ class CACMDocument(Document):
             self.title.replace('\n', ' '),
             self.summary.replace('\n', ' '),
             self.key_words.replace('\n', ' ')
+        )
+
+
+class StanfordDocument(Document):
+    tokenized_fields = [
+        'content'
+    ]
+
+    def __init__(self, id, content):
+        super().__init__(id)
+        self.content = content
+
+    def __repr__(self):
+        return "DOCID : {}\n CONTENT: {}\n".format(
+            self.id,
+            self.content
         )
