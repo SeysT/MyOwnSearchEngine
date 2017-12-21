@@ -4,24 +4,19 @@ import os
 
 from math import log
 
-from models.document import CACMDocumentCollection
-
+from models.document import StanfordDocumentCollection
 
 if __name__ == '__main__':
 
-    if 'cacm.collection' in os.listdir('Data/Collection'):
-        print("ONE")
-        document_collection = CACMDocumentCollection(
-            data_filename='Data/CACM/cacm.all',
-            stop_list_filename='Data/CACM/common_words',
-            load_on_creation=False,
+    if 'cs276.collection' in os.listdir('Data/Collection'):
+        document_collection = StanfordDocumentCollection(
+            data_filename='Data/CS276',
+            load_on_creation=False
         )
-        document_collection.load_from_file('Data/Collection/cacm.collection')
+        document_collection.load_from_file('Data/Collection/cs276.collection')
     else:
-        print("TWO")
-        document_collection = CACMDocumentCollection(
-            data_filename='Data/CACM/cacm.all',
-            stop_list_filename='Data/CACM/common_words',
+        document_collection = StanfordDocumentCollection(
+            data_filename='Data/CS276',
             load_on_creation=True,
         )
 
@@ -58,12 +53,12 @@ if __name__ == '__main__':
     vocabulary_size_1_million = k_Heap * (1000000) ** b_Heap
 
     print('Question 1:')
-    print('CACM contains {} tokens.'.format(token_number))
+    print('CS276 contains {} tokens.'.format(token_number))
     print('Question 2:')
-    print('CACM has a vocabulary size of {}.'.format(vocabulary_size))
+    print('CS276 has a vocabulary size of {}.'.format(vocabulary_size))
     print('Question 3:')
-    print('Half of CACM contains {} tokens.'.format(half_token_number))
-    print('Half of CACM has a vocabulary size of {}.'.format(
+    print('Half of CS276 contains {} tokens.'.format(half_token_number))
+    print('Half of CS276 has a vocabulary size of {}.'.format(
         half_vocabulary_size
     ))
     print('We can deduce Heap law parameter k = {}, b = {}.'.format(
@@ -72,7 +67,7 @@ if __name__ == '__main__':
     ))
     print('Question 4:')
     print(
-        'If CACM has 1 million tokens, its vocabulary size '
+        'If CS276 has 1 million tokens, its vocabulary size '
         'would be around {}.'.format(vocabulary_size_1_million)
     )
 
