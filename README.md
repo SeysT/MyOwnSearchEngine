@@ -52,6 +52,9 @@ Grâce aux paramètres obtenus à la question précédente, si la collection CAC
 
 ## TODO
 
+- [ ] Construire CLI booléen
+- [ ] Construire CLI vectoriel
+
 ### Collection CACM
 
 - [x] Identifier documents, puis les opérandes
@@ -59,22 +62,20 @@ Grâce aux paramètres obtenus à la question précédente, si la collection CAC
 - [x] Comparer avec la stop list
 - [x] Construire l'index inversé
 - [x] Prévoir un système d'import / export d'index dans un fichier pour sauvegarde
-- [ ] Mettre en place l'algo BSBI
-- [ ] Construire un CLI pour analyser les requêtes simples du modèle booléen
-- [ ] Construire un CLI pour la requête du moteur de recherche vectoriel
-- [ ] Construire une liste ordonnée de réponses, en fonction de la pertinence de plusieurs mesures et méthodes de pondération à tester
-- [ ] Le programme doit faire une mesure de pondération entre la requête et le résultats
-- [ ] Construire une évaluation de la pertience des résultats
+- [ ] Ecrice l'algo de recherche vectoriel -> Thibault
+- [ ] Ecrice l'algo de recherche booléen
+- [ ] Ecrire les méthodes de pondération pour une requete
+- [ ] Afficher les informations de performance pour une requete
+- [ ] Créer des test de pertinence : courbe rappel/précision, F-Measure, E-Measure et R-Measure, Mean Average Precision
 
 ### Collection Stanford
 
-- [ ] Charger les documents de la collection
-- [ ] Construire l'index inversé
-- [ ] Prévoir un système d'import / export d'index dans un fichier pour sauvegarde
-- [ ] Mettre en place l'algo BSBI
-- [ ] Avoir une approche distribuée de l'index avec MapReduce (=> à éclaircir)
-- [ ] Construire un CLI pour analyser les requêtes simples du modèle booléen
-- [ ] Construire un CLI pour la requête du moteur de recherche vectoriel
-- [ ] Construire une liste ordonnée de réponses, en fonction de la pertinence de plusieurs mesures et méthodes de pondération à tester
-- [ ] Le programme doit faire une mesure de pondération entre la requête et le résultats
+- [x] Charger les documents de la collection
+- [ ] Indexer la collection stanford avec une reprsentation par bloc, et avec une approche map-reduce pour l'indexation des blocs , algo BSBI -> Yoann
+- [x] Prévoir un système d'import / export d'index dans un fichier pour sauvegarde
+- [ ] Ecrice l'algo de recherche vectoriel -> Thibault
+- [ ] Ecrice l'algo de recherche booléen
+- [ ] Ecrire les méthodes de pondération pour une requete
+- [ ] Afficher les informations de performance pour une requete
+- [ ] Créer des test de pertinence : courbe rappel/précision, F-Measure, E-Measure et R-Measure, Mean Average Precision
 - [ ] Compresser l'index inversé
