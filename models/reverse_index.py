@@ -6,8 +6,8 @@ class ReverseIndex(object):
     This class contains our model for our reverse index
     + attributes:
         - reverse_index: contains the reverse index with the following structure:
-            {term: [frequence_doc, [document_ids...]]}
-    + methods:
+            {term: [frequence_col, [(document_id, frequence_doc, doc_len)...]]}
+    + core methods:
         - add_document: update self.reverse_index with a given document
         - save: save the current self.reverse_index in the given filename
         - load_from_file: load the reverse index contains in the given file
@@ -27,21 +27,18 @@ class ReverseIndex(object):
         """
         Update self.reverse_index given a document
         + params:
-            - document: should contain a term_bag property built like this:
-                {term, frequence}
+            - document: should contain a term_bag property built like this: {term, frequence}
         + return:
             None
-        + summary:
-            foreach term contains in keys of term_bag document:
-                we update the frequence_doc of current term
-                we add the document_id
         """
-        for term in document.term_bag.keys():
+        for term, frequence in document.term_bag.items():
             try:
                 self.reverse_index[term][0] += 1
-                self.reverse_index[term][1].append(document.id)
+                self.reverse_index[term][1].append(
+                    (document.id, frequence, len(document.term_bag))
+                )
             except KeyError:
-                self.reverse_index[term] = [1, [document.id]]
+                self.reverse_index[term] = [1, [(document.id, frequence, len(document.term_bag))]]
 
     def create_index(self, document_collection):
         """
