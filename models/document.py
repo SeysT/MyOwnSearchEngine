@@ -90,6 +90,8 @@ class CACMDocumentCollection(DocumentCollection):
                     attr,
                     '{}\n{}'.format(attr_value, to_add) if attr_value else to_add,
                 )
+        self.collection[current_id].tokenize_doc()
+        self.collection[current_id].clean_tokens(self.common_words)
 
 
 class StanfordDocumentCollection(DocumentCollection):
