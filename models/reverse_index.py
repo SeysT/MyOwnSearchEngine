@@ -12,6 +12,14 @@ class ReverseIndex(object):
         - save: save the current self.reverse_index in the given filename
         - load_from_file: load the reverse index contains in the given file
         - create_index: create reverse_index from given document_collection
+    + wrapping methods:
+        - __getitem__: return self.reverse_index[key]
+        - __setitem__: self.reverse_index[key] = value
+        - __delitem__: del self.reverse_index[key]
+        - __len__: return len(self.reverse_index)
+        - items: return self.reverse_index.items()
+        - values: return self.reverse_index.values()
+        - keys: return self.reverse_index.keys()
     """
 
     def __init__(self, document_collection=None):
@@ -74,3 +82,31 @@ class ReverseIndex(object):
         with open(filename, 'rb') as index_file:
             depickler = pickle.Unpickler(index_file)
             self.reverse_index = depickler.load()
+
+    def __getitem__(self, key):
+        """This methods wraps the __getitem__ methods of self.reverse_index"""
+        return self.reverse_index[key]
+
+    def __setitem__(self, key, value):
+        """This methods wraps the __setitem__ methods of self.reverse_index"""
+        self.reverse_index[key] = value
+
+    def __delitem__(self, key):
+        """This methods wraps the __delitem__ methods of self.reverse_index"""
+        del self.reverse_index[key]
+
+    def items(self):
+        """This methods wraps the items methods of self.reverse_index"""
+        return self.reverse_index.items()
+
+    def values(self):
+        """This methods wraps the values methods of self.reverse_index"""
+        return self.reverse_index.values()
+
+    def keys(self):
+        """This methods wraps the keys methods of self.reverse_index"""
+        return self.reverse_index.keys()
+
+    def __len__(self):
+        """This methods wraps the keys methods of self.reverse_index"""
+        return len(self.reverse_index)

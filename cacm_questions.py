@@ -10,7 +10,6 @@ from models.document import CACMDocumentCollection
 if __name__ == '__main__':
 
     if 'cacm.collection' in os.listdir('Data/Collection'):
-        print("ONE")
         document_collection = CACMDocumentCollection(
             data_filename='Data/CACM/cacm.all',
             stop_list_filename='Data/CACM/common_words',
@@ -18,7 +17,6 @@ if __name__ == '__main__':
         )
         document_collection.load_from_file('Data/Collection/cacm.collection')
     else:
-        print("TWO")
         document_collection = CACMDocumentCollection(
             data_filename='Data/CACM/cacm.all',
             stop_list_filename='Data/CACM/common_words',
@@ -38,7 +36,7 @@ if __name__ == '__main__':
     half_document_collection.collection = {
         key: value
         for key, value
-        in list(document_collection.collection.items())[:len(document_collection.collection) // 2]
+        in list(document_collection.items())[:len(document_collection) // 2]
     }
     half_document_collection.generate_vocabulary()
 
