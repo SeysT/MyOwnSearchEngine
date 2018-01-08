@@ -76,8 +76,8 @@ Grâce aux paramètres obtenus à la question précédente, si la collection CS2
 
 ## TODO
 
-- [ ] Construire CLI booléen
-- [ ] Construire CLI vectoriel
+- [x] Construire CLI booléen
+- [x] Construire CLI vectoriel
 
 ### Collection CACM
 
@@ -86,10 +86,10 @@ Grâce aux paramètres obtenus à la question précédente, si la collection CS2
 - [x] Comparer avec la stop list
 - [x] Construire l'index inversé
 - [x] Prévoir un système d'import / export d'index dans un fichier pour sauvegarde
-- [ ] Ecrice l'algo de recherche vectoriel -> Thibault
-- [ ] Ecrice l'algo de recherche booléen
+- [x] Ecrire l'algo de recherche vectoriel
+- [x] Ecrire l'algo de recherche booléen
 - [ ] Ecrire les méthodes de pondération pour une requete
-- [ ] Afficher les informations de performance pour une requete
+- [x] Afficher les informations de performance pour une requete
 - [ ] Créer des test de pertinence : courbe rappel/précision, F-Measure, E-Measure et R-Measure, Mean Average Precision
 
 ### Collection Stanford
@@ -97,9 +97,9 @@ Grâce aux paramètres obtenus à la question précédente, si la collection CS2
 - [x] Charger les documents de la collection
 - [ ] Indexer la collection stanford avec une reprsentation par bloc, et avec une approche map-reduce pour l'indexation des blocs , algo BSBI -> Yoann
 - [x] Prévoir un système d'import / export d'index dans un fichier pour sauvegarde
-- [ ] Ecrice l'algo de recherche vectoriel -> Thibault
-- [ ] Ecrice l'algo de recherche booléen
+- [ ] Adapter l'algo de recherche vectoriel de CACM
+- [ ] Adapter l'algo de recherche booléen de CACM
 - [ ] Ecrire les méthodes de pondération pour une requete
-- [ ] Afficher les informations de performance pour une requete
+- [x] Afficher les informations de performance pour une requete
 - [ ] Créer des test de pertinence : courbe rappel/précision, F-Measure, E-Measure et R-Measure, Mean Average Precision
 - [ ] Compresser l'index inversé
