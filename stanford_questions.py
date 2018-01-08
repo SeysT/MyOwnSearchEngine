@@ -33,7 +33,7 @@ if __name__ == '__main__':
     half_document_collection.collection = {
         key: value
         for key, value
-        in list(document_collection.collection.items())[:len(document_collection.collection) // 2]
+        in list(document_collection.items())[:len(document_collection) // 2]
     }
     half_document_collection.generate_vocabulary()
 

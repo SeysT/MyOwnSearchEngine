@@ -6,12 +6,20 @@ class ReverseIndex(object):
     This class contains our model for our reverse index
     + attributes:
         - reverse_index: contains the reverse index with the following structure:
-            {term: [frequence_doc, [document_ids...]]}
-    + methods:
+            {term: [frequence_col, [(document_id, frequence_doc, doc_len)...]]}
+    + core methods:
         - add_document: update self.reverse_index with a given document
         - save: save the current self.reverse_index in the given filename
         - load_from_file: load the reverse index contains in the given file
         - create_index: create reverse_index from given document_collection
+    + wrapping methods:
+        - __getitem__: return self.reverse_index[key]
+        - __setitem__: self.reverse_index[key] = value
+        - __delitem__: del self.reverse_index[key]
+        - __len__: return len(self.reverse_index)
+        - items: return self.reverse_index.items()
+        - values: return self.reverse_index.values()
+        - keys: return self.reverse_index.keys()
     """
 
     def __init__(self, document_collection=None):
@@ -27,21 +35,18 @@ class ReverseIndex(object):
         """
         Update self.reverse_index given a document
         + params:
-            - document: should contain a term_bag property built like this:
-                {term, frequence}
+            - document: should contain a term_bag property built like this: {term, frequence}
         + return:
             None
-        + summary:
-            foreach term contains in keys of term_bag document:
-                we update the frequence_doc of current term
-                we add the document_id
         """
-        for term in document.term_bag.keys():
+        for term, frequence in document.term_bag.items():
             try:
                 self.reverse_index[term][0] += 1
-                self.reverse_index[term][1].append(document.id)
+                self.reverse_index[term][1].append(
+                    (document.id, frequence, len(document.term_bag))
+                )
             except KeyError:
-                self.reverse_index[term] = [1, [document.id]]
+                self.reverse_index[term] = [1, [(document.id, frequence, len(document.term_bag))]]
 
     def create_index(self, document_collection):
         """
@@ -77,3 +82,31 @@ class ReverseIndex(object):
         with open(filename, 'rb') as index_file:
             depickler = pickle.Unpickler(index_file)
             self.reverse_index = depickler.load()
+
+    def __getitem__(self, key):
+        """This methods wraps the __getitem__ methods of self.reverse_index"""
+        return self.reverse_index[key]
+
+    def __setitem__(self, key, value):
+        """This methods wraps the __setitem__ methods of self.reverse_index"""
+        self.reverse_index[key] = value
+
+    def __delitem__(self, key):
+        """This methods wraps the __delitem__ methods of self.reverse_index"""
+        del self.reverse_index[key]
+
+    def items(self):
+        """This methods wraps the items methods of self.reverse_index"""
+        return self.reverse_index.items()
+
+    def values(self):
+        """This methods wraps the values methods of self.reverse_index"""
+        return self.reverse_index.values()
+
+    def keys(self):
+        """This methods wraps the keys methods of self.reverse_index"""
+        return self.reverse_index.keys()
+
+    def __len__(self):
+        """This methods wraps the keys methods of self.reverse_index"""
+        return len(self.reverse_index)

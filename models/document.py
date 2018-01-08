@@ -50,6 +50,34 @@ class DocumentCollection(object):
         for frequence in self.vocabulary.values():
             self.token_number += frequence
 
+    def __getitem__(self, key):
+        """This methods wraps the __getitem__ methods of self.collection"""
+        return self.collection[key]
+
+    def __setitem__(self, key, value):
+        """This methods wraps the __setitem__ methods of self.collection"""
+        self.collection[key] = value
+
+    def __delitem__(self, key):
+        """This methods wraps the __delitem__ methods of self.collection"""
+        del self.collection[key]
+
+    def items(self):
+        """This methods wraps the items methods of self.collection"""
+        return self.collection.items()
+
+    def values(self):
+        """This methods wraps the values methods of self.collection"""
+        return self.collection.values()
+
+    def keys(self):
+        """This methods wraps the keys methods of self.collection"""
+        return self.collection.keys()
+
+    def __len__(self):
+        """This methods wraps the len methods of self.collection"""
+        return len(self.collection)
+
 
 class CACMDocumentCollection(DocumentCollection):
 
@@ -90,6 +118,8 @@ class CACMDocumentCollection(DocumentCollection):
                     attr,
                     '{}\n{}'.format(attr_value, to_add) if attr_value else to_add,
                 )
+        self.collection[current_id].tokenize_doc()
+        self.collection[current_id].clean_tokens(self.common_words)
 
 
 class StanfordDocumentCollection(DocumentCollection):
