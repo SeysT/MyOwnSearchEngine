@@ -7,10 +7,10 @@ class Request(object):
         self.raw_request = raw_request
 
     def return_results(self, index, *args, **kwargs):
-        self.parse_request()
+        self.parse_request(index)
         return self.find_results(index, *args, **kwargs)
 
-    def parse_request(self):
+    def parse_request(self, index):
         """
         Parse the raw request given at object's creation.
         """
@@ -29,11 +29,13 @@ class BooleanRequest(Request):
 
 class VectorialRequest(Request):
 
-    def parse_request(self):
+    def parse_request(self, index):
         """
         We parse the raw request by splitting on space.
         """
-        self.parsed_request = [elt.lower() for elt in self.raw_request.split(' ')]
+        self.parsed_request = [
+            elt.lower() for elt in self.raw_request.split(' ') if elt.lower() in index.keys()
+        ]
 
     def find_results(self, index, weight_function=lambda doc_len, tf, df: 1 * tf * df):
         """
