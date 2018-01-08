@@ -1,5 +1,7 @@
 from math import sqrt
 
+from models.parser import BooleanParser, Tokenizer
+
 
 class Request(object):
 
@@ -24,14 +26,27 @@ class Request(object):
 
 
 class BooleanRequest(Request):
-    pass
+    """All the logic of this class uses models written in file models/parser.py."""
+
+    def parse_request(self, index):
+        """
+        We have two steps to parse the request:
+            - tokenize the raw_request
+            - build the associated tree
+        """
+        self.tokenized_request = Tokenizer.tokenize(self.raw_request)
+        self.parsed_request = BooleanParser.parse(self.tokenized_request)
+
+    def find_results(self, index):
+        """We only have to use the eval function of the root node."""
+        return sorted(list(self.parsed_request.eval(index)))
 
 
 class VectorialRequest(Request):
 
     def parse_request(self, index):
         """
-        We parse the raw request by splitting on space.
+        We parse the raw request by splitting on spaces.
         """
         self.parsed_request = [
             elt.lower() for elt in self.raw_request.split(' ') if elt.lower() in index.keys()
