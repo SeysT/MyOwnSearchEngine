@@ -6,7 +6,7 @@ Usage:
     engine.py cacm (vectorial | boolean) <request> [--collection=<filepath>]
                                                    [--index=<filepath>]
                                                    [--results=<len>]
-    engine.py cs276 (vectorial | boolean) <request>
+    engine.py cs276 (vectorial | boolean) <request> [--results=<len>]
     engine.py (-h | --help)
     engine.py --version
 
