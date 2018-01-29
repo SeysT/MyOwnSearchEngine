@@ -32,6 +32,7 @@ index_folder:
 
 collection_folder:
 	mkdir -p Data/Collection/
+	mkdir -p Data/Collection/CS276/
 
 .PHONY: clean mrproper
 

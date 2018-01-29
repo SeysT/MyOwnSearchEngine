@@ -79,6 +79,122 @@ class DocumentCollection(object):
         return len(self.collection)
 
 
+class MetaDocumentCollection(object):
+    """This class allows us to group collections in a single interface.
+    This makes it easier to use our collection properties for a significant
+    amount of data when files are splitted in multiple directories.
+    """
+
+    def __init__(self, data_dirname='', load_on_creation=False):
+        self.data_dirname = data_dirname
+        self.meta_collection = {} # must contains DocumentCollection objects
+        if load_on_creation:
+            self.load_collection()
+            self.generate_vocabulary()
+
+    def save(self, dirname):
+        for collection in self.meta_collection.values():
+            with open(dirname + '/' + collection.data_filename + '.collection', 'wb') as collection_file:
+                pickler = pickle.Pickler(collection_file)
+                pickler.dump(collection)
+
+    def load_from_dir(self, dirname):
+        for file in os.listdir(dirname):
+            with open(dirname + '/' + file, 'rb') as collection_file:
+                depickler = pickle.Unpickler(collection_file)
+                self.meta_collection[file] = depickler.load()
+        self.generate_vocabulary()
+
+    def load_collection(self):
+        raise NotImplementedError
+
+    def generate_vocabulary(self):
+        self._generate_vocabulary()
+        self._generate_vocabulary_size()
+        self._generate_token_number()
+
+    def _generate_vocabulary(self):
+        self.vocabulary = {}
+        for collection in self.meta_collection.values():
+            for document in collection.values():
+                for attr in document.tokenized_fields:
+                    for token in getattr(document, attr):
+                        try:
+                            self.vocabulary[token] += 1
+                        except KeyError:
+                            self.vocabulary[token] = 1
+
+    def _generate_vocabulary_size(self):
+        self.vocabulary_size = len(self.vocabulary.keys())
+
+    def _generate_token_number(self):
+        self.token_number = 0
+        for frequence in self.vocabulary.values():
+            self.token_number += frequence
+
+    def __getitem__(self, key):
+        """This methods wraps the __getitem__ methods of self.collection"""
+        for collection in self.meta_collection.values():
+            try:
+                item = collection[key]
+                return item
+            except KeyError:
+                continue
+        raise KeyError
+
+    def __setitem__(self, key, value):
+        """This methods wraps the __setitem__ methods of self.collection"""
+        isSet = False
+        for collection in self.meta_collection.values():
+            try:
+                collection[key] = value
+                isSet = True
+            except KeyError:
+                continue
+        if not isSet:
+            raise KeyError
+
+    def __delitem__(self, key):
+        """This methods wraps the __delitem__ methods of self.collection"""
+        isDel = False
+        for collection in self.meta_collection.values():
+            try:
+                del self.collection[key]
+                isDel = True
+            except KeyError:
+                continue
+        if not isDel:
+            raise KeyError
+
+    def items(self):
+        """This methods wraps the items methods of self.collection"""
+        items = []
+        for collection in self.meta_collection.values():
+            items.append(collection.items())
+        return items
+
+    def values(self):
+        """This methods wraps the values methods of self.collection"""
+        values = []
+        for collection in self.meta_collection.values():
+            values.append(collection.values())
+        return values
+
+    def keys(self):
+        """This methods wraps the keys methods of self.collection"""
+        keys = []
+        for collection in self.meta_collection.values():
+            keys.append(collection.keys())
+        return keys
+
+    def __len__(self):
+        """This methods wraps the len methods of self.collection"""
+        length = 0
+        for collection in self.meta_collection.values():
+            length += len(collection)
+        return length
+
+
 class CACMDocumentCollection(DocumentCollection):
 
     def __init__(self, data_filename='', stop_list_filename='', load_on_creation=False):
@@ -122,19 +238,22 @@ class CACMDocumentCollection(DocumentCollection):
         self.collection[current_id].clean_tokens(self.common_words)
 
 
-class StanfordDocumentCollection(DocumentCollection):
-    def load_collection(self):
-        for directory in os.listdir(self.data_filename):
-            print("DIRECTORY", directory)
-            for filename in os.listdir(self.data_filename + '/' + directory):
+class StanfordDocumentCollection(MetaDocumentCollection):
 
-                with open(self.data_filename + '/' + directory + '/' + filename, 'r')as df:
+    def load_collection(self):
+        for directory in os.listdir(self.data_dirname):
+            print("DIRECTORY", directory)
+            collection = DocumentCollection(data_filename=directory)
+            for filename in os.listdir(self.data_dirname + '/' + directory):
+
+                with open(self.data_dirname + '/' + directory + '/' + filename, 'r')as df:
                     data = df.read()
 
                 tokens = [token for token in data.split()]
 
                 # modify document collection to add the Stanford Document
-                self.collection[filename] = StanfordDocument(filename, tokens)
+                collection[filename] = StanfordDocument(filename, tokens)
+            self.meta_collection[directory] = collection
 
 
 class Document(object):

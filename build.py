@@ -15,8 +15,8 @@ if __name__ == '__main__':
     cacm_reverse_index.save('Data/Index/cacm.index')
 
     stanford_document_collection = StanfordDocumentCollection(
-        data_filename='Data/CS276',
+        data_dirname='Data/CS276',
         load_on_creation=True
     )
 
-    stanford_document_collection.save('Data/Collection/cs276.collection')
+    stanford_document_collection.save('Data/Collection/CS276')

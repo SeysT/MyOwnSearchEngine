@@ -8,15 +8,15 @@ from models.document import StanfordDocumentCollection
 
 if __name__ == '__main__':
 
-    if 'cs276.collection' in os.listdir('Data/Collection'):
+    if 'CS276' in os.listdir('Data/Collection'):
         document_collection = StanfordDocumentCollection(
-            data_filename='Data/CS276',
+            data_dirname='Data/CS276',
             load_on_creation=False
         )
-        document_collection.load_from_file('Data/Collection/cs276.collection')
+        document_collection.load_from_dir('Data/Collection/CS276')
     else:
         document_collection = StanfordDocumentCollection(
-            data_filename='Data/CS276',
+            data_dirname='Data/CS276',
             load_on_creation=True,
         )
 
@@ -30,46 +30,46 @@ if __name__ == '__main__':
     rank = np.array(list(range(1, len(frequence) + 1)))
 
     half_document_collection = document_collection
-    half_document_collection.collection = {
-        key: value
-        for key, value
-        in list(document_collection.items())[:len(document_collection) // 2]
-    }
-    half_document_collection.generate_vocabulary()
-
-    half_vocabulary = half_document_collection.vocabulary
-    half_token_number = half_document_collection.token_number
-    half_vocabulary_size = half_document_collection.vocabulary_size
-
-    b_Heap = (
-        log(vocabulary_size / half_vocabulary_size) /
-        log(token_number / half_token_number)
-    )
-    k_Heap = (
-        (vocabulary_size - half_vocabulary_size) /
-        (token_number ** b_Heap - half_token_number ** b_Heap)
-    )
-
-    vocabulary_size_1_million = k_Heap * (1000000) ** b_Heap
+    # half_document_collection.meta_collection = {
+    #     key: value
+    #     for key, value
+    #     in list(document_collection.items())[:len(document_collection) // 2]
+    # }
+    # half_document_collection.generate_vocabulary()
+    #
+    # half_vocabulary = half_document_collection.vocabulary
+    # half_token_number = half_document_collection.token_number
+    # half_vocabulary_size = half_document_collection.vocabulary_size
+    #
+    # b_Heap = (
+    #     log(vocabulary_size / half_vocabulary_size) /
+    #     log(token_number / half_token_number)
+    # )
+    # k_Heap = (
+    #     (vocabulary_size - half_vocabulary_size) /
+    #     (token_number ** b_Heap - half_token_number ** b_Heap)
+    # )
+    #
+    # vocabulary_size_1_million = k_Heap * (1000000) ** b_Heap
 
     print('Question 1:')
     print('CS276 contains {} tokens.'.format(token_number))
     print('Question 2:')
     print('CS276 has a vocabulary size of {}.'.format(vocabulary_size))
-    print('Question 3:')
-    print('Half of CS276 contains {} tokens.'.format(half_token_number))
-    print('Half of CS276 has a vocabulary size of {}.'.format(
-        half_vocabulary_size
-    ))
-    print('We can deduce Heap law parameter k = {}, b = {}.'.format(
-        k_Heap,
-        b_Heap,
-    ))
-    print('Question 4:')
-    print(
-        'If CS276 has 1 million tokens, its vocabulary size '
-        'would be around {}.'.format(vocabulary_size_1_million)
-    )
+    # print('Question 3:')
+    # print('Half of CS276 contains {} tokens.'.format(half_token_number))
+    # print('Half of CS276 has a vocabulary size of {}.'.format(
+    #     half_vocabulary_size
+    # ))
+    # print('We can deduce Heap law parameter k = {}, b = {}.'.format(
+    #     k_Heap,
+    #     b_Heap,
+    # ))
+    # print('Question 4:')
+    # print(
+    #     'If CS276 has 1 million tokens, its vocabulary size '
+    #     'would be around {}.'.format(vocabulary_size_1_million)
+    # )
 
     plt.subplot(2, 1, 2)
     plt.plot(np.log(frequence), np.log(rank))
