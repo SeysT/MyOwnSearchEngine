@@ -129,13 +129,44 @@ class Reducer(object):
 
         with open('Data/Index/cs276.index', 'w', 1) as output_file:
             buffers = Buffers(files)
-
             while not buffers.isEmpty:
-                min_value = buffers.update()
-                output_file.write(str(min_value))
-                output_file.write('\n')
-                buffers.remove_value(min_value)
+                # check that we have got all the postings corresponding to the
+                # same id before writing the posting list to the index
+                L = []  # list of entries sharing the same term_id
+                _, index_entry = buffers.update()
+                if index_entry is None:
+                    break
+                term_id = index_entry[0]
+                while True:
+                    min_value, index_entry = buffers.update()
+                    if index_entry is None:
+                        break
+                    if term_id != index_entry[0]:  # new term, we will merge it later
+                        break
+                    L.append(index_entry)
+                    buffers.remove_value(min_value)
 
+                # merge the different terms into one
+                # {term: [fr equence_col, [(document_id, frequence_doc, doc_len)...]]}
+                # term_id_dict[term_id][0] += 1
+                # term_id_dict[term_id][1].append(
+                #     (doc.id, frequence, len(doc.term_bag))
+                # )
+                new_entry = (term_id, [0, []])
+                for entry in L:
+                    new_entry[1][0] += entry[1][0]
+                    for posting in entry[1][1]:
+                        new_entry[1][1].append(
+                            (posting[0], posting[1], posting[2])
+                        )
+
+                # then write it
+                output_file.write(str(new_entry))
+                output_file.write('\n')
+                if term_id % 100 == 0:
+                    print("INDEXED_TERM", term_id)
+            print("loop ended")
+        print("closed file & leaving function")
     # @staticmethod
     # def select_min_value(choices):
     #     """Implements the k-way merging : selects the choices with the lowest
@@ -175,12 +206,20 @@ class Buffers(object):
         value.
             + choices : array of index
         """
-        min_index = 0
+        min_index = -1
         # print("CHOICES", choices)
-        while min_index not in choices:
-            min_index += 1
-        for i in range(min_index + 1, len(choices)):
-            if i in choices and choices[i] < choices[min_index]:
+        # while min_index not in choices:
+        #     if self.isEmpty:
+        #         print("Stuck in loop of_select_min_value")
+        #     min_index += 1
+        for an_index in choices: #ensure min_index is in choices
+            min_index = an_index
+            break
+        # for i in range(min_index + 1, len(choices)):
+        #     if i in choices and choices[i] < choices[min_index]:
+        #         min_index = i
+        for i in choices:
+            if choices[i] < choices[min_index]:
                 min_index = i
         return min_index
 
@@ -192,21 +231,31 @@ class Buffers(object):
             if self.buffers[i] is None and i not in self.empty_buffers:
                 # self.buffers[i] = self.files[i].readline()
                 line = self.files[i].readline()
-                value = ast.literal_eval(line)
-                print("EVAL", line[:20])
-                self.buffers[i] = value
-
-                if self.buffers[i] == '':  # EOF
+                if line == '':  # EOF
                     self.empty_buffers.add(i)
+                    print("EMPTY BUFFERS", self.empty_buffers, len(self.empty_buffers), len(self.files))
+                    continue
+                value = ast.literal_eval(line)
+                # print("BLOC", i, "TERM_ID", line[1:2], end='     ')
+                self.buffers[i] = value
+        if self.isEmpty:
+            return False
+        else:
+            return True
 
     def _get_buffers_values(self):
         # returning the tem_id for sorting
         return {i: self.buffers[i][0] for i in range(len(self.buffers)) if i not in self.empty_buffers}
 
     def update(self):
-        self._fill_buffers()
-        min_index = self._select_min_value(self._get_buffers_values())
-        return min_index
+        if self._fill_buffers():
+            # print("ALL_INDEX", self._get_buffers_values(), end='   ')
+            min_index = self._select_min_value(self._get_buffers_values())
+            # print("MIN_INDEX", min_index, end='   ')
+            # print("TERM_ID_VALUE", self.buffers[min_index][0])
+            return min_index, self.buffers[min_index]
+        else:
+            return -1, None
 
     def remove_value(self, index):
         self.buffers[index] = None
