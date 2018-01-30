@@ -177,7 +177,7 @@ class MetaDocumentCollection(object):
         """This methods wraps the values methods of self.collection"""
         values = []
         for collection in self.meta_collection.values():
-            values.append(collection.values())
+            values.append(list(collection.values()))
         return values
 
     def keys(self):
