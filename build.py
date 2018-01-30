@@ -1,6 +1,6 @@
 from models.document import CACMDocumentCollection, StanfordDocumentCollection
 from models.reverse_index import ReverseIndex
-from models.bsbi_construction import StanfordReverseIndex
+from models.bsbi_construction import StanfordReverseIndex, Reducer
 import os
 
 
@@ -31,3 +31,5 @@ if __name__ == '__main__':
 
     print("Will build index")
     stanford_reverse_index = StanfordReverseIndex(document_collection=stanford_document_collection)
+
+    # Reducer.reduce()
