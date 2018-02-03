@@ -12,14 +12,14 @@ if __name__ == '__main__':
     if 'cacm.collection' in os.listdir('Data/Collection'):
         document_collection = CACMDocumentCollection(
             data_filename='Data/CACM/cacm.all',
-            stop_list_filename='Data/CACM/common_words',
+            stop_list_filepath='Data/CACM/common_words',
             load_on_creation=False,
         )
         document_collection.load_from_file('Data/Collection/cacm.collection')
     else:
         document_collection = CACMDocumentCollection(
             data_filename='Data/CACM/cacm.all',
-            stop_list_filename='Data/CACM/common_words',
+            stop_list_filepath='Data/CACM/common_words',
             load_on_creation=True,
         )
 

@@ -6,20 +6,21 @@ from nltk.tokenize import word_tokenize
 
 class DocumentCollection(object):
 
-    def __init__(self, data_filename='', load_on_creation=False):
-        self.data_filename = data_filename
+    def __init__(self, source_data_filepath='', name='', load_on_creation=False):
+        self.source_data_filepath = source_data_filepath
         self.collection = {}
+        self.name = name
         if load_on_creation:
             self.load_collection()
             self.generate_vocabulary()
 
-    def save(self, filename):
-        with open(filename, 'wb') as collection_file:
+    def save(self, filepath):
+        with open(filepath, 'wb') as collection_file:
             pickler = pickle.Pickler(collection_file)
             pickler.dump(self.collection)
 
-    def load_from_file(self, filename):
-        with open(filename, 'rb') as collection_file:
+    def load_from_file(self, filepath):
+        with open(filepath, 'rb') as collection_file:
             depickler = pickle.Unpickler(collection_file)
             self.collection = depickler.load()
         self.generate_vocabulary()
@@ -85,22 +86,23 @@ class MetaDocumentCollection(object):
     amount of data when files are splitted in multiple directories.
     """
 
-    def __init__(self, data_dirname='', load_on_creation=False):
-        self.data_dirname = data_dirname
-        self.meta_collection = {} # must contains DocumentCollection objects
+    def __init__(self, data_dirpath='', name='', load_on_creation=False):
+        self.data_dirpath = data_dirpath
+        self.name = name
+        self.meta_collection = {}  # must contains DocumentCollection objects
         if load_on_creation:
             self.load_collection()
             self.generate_vocabulary()
 
-    def save(self, dirname):
+    def save(self, dirpath):
         for collection in self.meta_collection.values():
-            with open(dirname + '/' + collection.data_filename + '.collection', 'wb') as collection_file:
+            with open(dirpath + '/' + collection.name + '.collection', 'wb') as collection_file:
                 pickler = pickle.Pickler(collection_file)
                 pickler.dump(collection)
 
-    def load_from_dir(self, dirname):
-        for file in os.listdir(dirname):
-            with open(dirname + '/' + file, 'rb') as collection_file:
+    def load_from_dir(self, dirpath):
+        for file in os.listdir(dirpath):
+            with open(dirpath + '/' + file, 'rb') as collection_file:
                 depickler = pickle.Unpickler(collection_file)
                 self.meta_collection[file] = depickler.load()
         self.generate_vocabulary()
@@ -169,7 +171,7 @@ class MetaDocumentCollection(object):
     def get_collections(self):
         col = {}
         for collection in self.meta_collection.values():
-            col[collection.data_filename] = collection
+            col[collection.name] = collection
         return col.values()
 
     def items(self):
@@ -203,23 +205,24 @@ class MetaDocumentCollection(object):
 
 class CACMDocumentCollection(DocumentCollection):
 
-    def __init__(self, data_filename='', stop_list_filename='', load_on_creation=False):
-        self.stop_list_filename = stop_list_filename
+    def __init__(self, source_data_filepath='', stop_list_filepath='', load_on_creation=False):
         self.common_words = []
+        self.stop_list_filepath = stop_list_filepath
+        self.name = 'cacm'
         if load_on_creation:
             # needs to be done before calling the load_collection method that
             # needs the common words to clean the tokens
             self.load_common_words()
-        super().__init__(data_filename, load_on_creation)
+        super().__init__(source_data_filepath, self.name, load_on_creation)
 
     def load_common_words(self):
-        with open(self.stop_list_filename, 'r') as sl:
+        with open(self.stop_list_filepath, 'r') as sl:
             data = sl.read()
 
         self.common_words = [line.strip() for line in data.split('\n')]
 
     def load_collection(self):
-        with open(self.data_filename, 'r') as df:
+        with open(self.source_data_filepath, 'r') as df:
             data = df.read()
 
         current_id = None
@@ -246,13 +249,17 @@ class CACMDocumentCollection(DocumentCollection):
 
 class StanfordDocumentCollection(MetaDocumentCollection):
 
-    def load_collection(self):
-        for directory in os.listdir(self.data_dirname):
-            print("DIRECTORY", directory)
-            collection = DocumentCollection(data_filename=directory)
-            for filename in os.listdir(self.data_dirname + '/' + directory):
+    def __init__(self, data_dirpath='', load_on_creation=False):
+        self.name = 'cs276'
+        super().__init__(data_dirpath, self.name, load_on_creation)
 
-                with open(self.data_dirname + '/' + directory + '/' + filename, 'r')as df:
+    def load_collection(self):
+        for directory in os.listdir(self.data_dirpath):
+            print("DIRECTORY", directory)
+            collection = DocumentCollection(name=directory)
+            for filename in os.listdir(self.data_dirpath + '/' + directory):
+
+                with open(self.data_dirpath + '/' + directory + '/' + filename, 'r')as df:
                     data = df.read()
 
                 tokens = [token for token in data.split()]

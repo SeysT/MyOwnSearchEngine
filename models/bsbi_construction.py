@@ -36,6 +36,16 @@ class ReverseIndex(object):
         """
         self.reverse_index = {}
         self.term_dict = {}
+        if document_collection:
+            self.parse_all_terms(document_collection)
+            self.create_index(document_collection)
+
+    def parse_all_terms(self, document_collection):
+        """
+        This method collects all the terms that exists in all the documents,
+        and give them a unique id
+        """
+        raise NotImplementedError
 
     def create_index(self, document_collection):
         raise NotImplementedError
@@ -69,19 +79,48 @@ class ReverseIndex(object):
         return len(self.reverse_index)
 
 
-class StanfordReverseIndex(ReverseIndex):
-
-    def __init__(self, document_collection=None):
-        super().__init__(document_collection)
-        if document_collection:
-            self.parse_all_terms(document_collection)
-            self.create_index(document_collection)
+class CACMReverseIndex(ReverseIndex):
 
     def parse_all_terms(self, document_collection):
+        begin = datetime.now()
+        for document in document_collection.values():
+            for token in document.term_bag:
+                try:
+                    self.term_dict[token]  # check if the term already exists
+                except KeyError:
+                    self.term_dict[token] = ReverseIndex.term_id
+                    ReverseIndex.term_id += 1
+        print("======= Generating term id dictionnary time : ", datetime.now() - begin, " =======")
+
+    def create_index(self, document_collection):
         """
-        This method collects all the terms that exists in all the documents,
-        and give them a unique id
+        Creates the index using a MapReduce approach. We have only one bloc for
+        that small collection
         """
+        begin = datetime.now()
+        Mapper.map(
+            self.term_dict,
+            document_collection,
+            'temp/' + document_collection.name + '.index'
+        )
+        print("======= Time for mapping : ", datetime.now() - begin, " =======")
+
+        # it takes some time before the mapping is finished and the reducing
+        # phase can starts
+        begin = datetime.now()
+        # Here we use only one reducer, that is enought to merge the indexes
+        # in one time because we read the partial text indexes line by line
+        file_paths = ['temp/' + document_collection.name + '.index']
+        Reducer.reduce(
+            file_paths,
+            'Data/Index/cacm.index'
+        )
+        print("======= Time for reducing : ", datetime.now() - begin, " =======")
+
+
+class StanfordReverseIndex(ReverseIndex):
+
+    def parse_all_terms(self, document_collection):
         begin = datetime.now()
         for collection in document_collection.values():
             for document in collection:
@@ -106,7 +145,7 @@ class StanfordReverseIndex(ReverseIndex):
             Mapper.map(
                 self.term_dict,
                 collection,
-                'temp/' + collection.data_filename + '.index'
+                'temp/' + collection.name + '.index'
             )
         print("======= Time for mapping : ", datetime.now() - begin, " =======")
 
@@ -116,7 +155,6 @@ class StanfordReverseIndex(ReverseIndex):
         # Here we use only one reducer, that is enought to merge the indexes
         # in one time because we read the partial text indexes line by line
         file_paths = ['temp/' + f for f in os.listdir('temp/')]
-        print(file_paths)
         Reducer.reduce(
             file_paths,
             'Data/Index/cs276.index'
