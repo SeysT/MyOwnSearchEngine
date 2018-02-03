@@ -1,34 +1,72 @@
-# const taille_bloc
-# fonction a écrire :
-# parse block : stocke tous les termID, docID en mémoire jusqu'à remplir le block
-#
-# tri du block
-# write block to disk : sauvegarde du bloc de l'index sur le disque
-
 import operator
 import os
 import ast
+from datetime import datetime
 
 
 class ReverseIndex(object):
     """
+    This class contains our model for our reverse index
     + attributes:
-        - term_dict : dict that contains all the terms of all the documents and
-        their affected id under the form {token: id}
+        - reverse_index: contains the reverse index with the following structure:
+            {term: [frequence_col, [(document_id, frequence_doc, doc_len)...]]}
+        - term_dict: dict that contains all the terms of all the documents and
+        their affected id under the form {term: id}
+        - term_id: static attribute used to keep track of the last attributed id
+    + core methods:
+        - save: save the current self.reverse_index in the given filename in a
+        text file
+        - load_from_file: load the reverse index contained in the given text
+        file
+        - create_index: create reverse_index from given document_collection
+    + wrapping methods:
+        - __getitem__: return self.reverse_index[key]
+        - __setitem__: self.reverse_index[key] = value
+        - __delitem__: del self.reverse_index[key]
+        - __len__: return len(self.reverse_index)
+        - items: return self.reverse_index.items()
+        - values: return self.reverse_index.values()
+        - keys: return self.reverse_index.keys()
     """
     term_id = 0
 
     def __init__(self, document_collection=None):
         """
         We init the reverse_index attribute to an empty dict.
-        If a document collection, we initialize reverse_index calling create_index method.
         """
         self.reverse_index = {}
-        # { (term, termID), ...}
         self.term_dict = {}
 
-    def create_index(self):
+    def create_index(self, document_collection):
         raise NotImplementedError
+
+    def __getitem__(self, key):
+        """This methods wraps the __getitem__ methods of self.reverse_index"""
+        return self.reverse_index[key]
+
+    def __setitem__(self, key, value):
+        """This methods wraps the __setitem__ methods of self.reverse_index"""
+        self.reverse_index[key] = value
+
+    def __delitem__(self, key):
+        """This methods wraps the __delitem__ methods of self.reverse_index"""
+        del self.reverse_index[key]
+
+    def items(self):
+        """This methods wraps the items methods of self.reverse_index"""
+        return self.reverse_index.items()
+
+    def values(self):
+        """This methods wraps the values methods of self.reverse_index"""
+        return self.reverse_index.values()
+
+    def keys(self):
+        """This methods wraps the keys methods of self.reverse_index"""
+        return self.reverse_index.keys()
+
+    def __len__(self):
+        """This methods wraps the keys methods of self.reverse_index"""
+        return len(self.reverse_index)
 
 
 class StanfordReverseIndex(ReverseIndex):
@@ -40,6 +78,11 @@ class StanfordReverseIndex(ReverseIndex):
             self.create_index(document_collection)
 
     def parse_all_terms(self, document_collection):
+        """
+        This method collects all the terms that exists in all the documents,
+        and give them a unique id
+        """
+        begin = datetime.now()
         for collection in document_collection.values():
             for document in collection:
                 for token in document.term_bag:
@@ -48,91 +91,115 @@ class StanfordReverseIndex(ReverseIndex):
                     except KeyError:
                         self.term_dict[token] = ReverseIndex.term_id
                         ReverseIndex.term_id += 1
+        print("======= Generating term id dictionnary time : ", datetime.now() - begin, " =======")
 
-    def create_index(self, document_collection):
-        # document_collection = StanfordDocumentCollection(
-        #     data_dirname='Data/CS276',
-        #     load_on_creation=True,
-        # )
-
-        for collection in document_collection.values():
-            Mapper.map(self.term_dict, collection)
+    def create_index(self, meta_document_collection):
+        """
+        Creates the index using a MapReduce approach. Each bloc is a
+        sub-collection of Stanford collection (ie a bloc = collection formed by
+        all the files in a folder)
+        """
+        begin = datetime.now()
+        for collection in meta_document_collection.get_collections():
+            # print(collection)
             # send collections as blocs to the mapper
+            Mapper.map(
+                self.term_dict,
+                collection,
+                'temp/' + collection.data_filename + '.index'
+            )
+        print("======= Time for mapping : ", datetime.now() - begin, " =======")
 
-# differentiate the stanford index from the CACM Index
-# in Stanford, we have to open documents once in a while
+        # it takes some time before the mapping is finished and the reducing
+        # phase can starts
+        begin = datetime.now()
+        # Here we use only one reducer, that is enought to merge the indexes
+        # in one time because we read the partial text indexes line by line
+        file_paths = ['temp/' + f for f in os.listdir('temp/')]
+        print(file_paths)
+        Reducer.reduce(
+            file_paths,
+            'Data/Index/cs276.index'
+        )
+        print("======= Time for reducing : ", datetime.now() - begin, " =======")
 
 
 class Mapper(object):
-
-    """A bloc is defined as following :
-        A folder or a file, containing multiple documents (the size and the
-        number of documents is given by the document collection)
     """
-    output_file = 0
+    Class defining a mapper that takes a bloc, parse it, sort the terms
+    following their term_id and write the result to a text file
+    """
 
     @staticmethod
-    def map(term_dict, collection):
-        print("Start collection")
+    def map(term_dict, collection, filepath):
+        """
+        + attributes:
+            - term_dict : dict containing all the possible terms and their id
+            - collection : object of type Collection containing all the
+            documents that need to be indexed
+            - filepath: path where the partial index must be stored
+        """
+        # dictionnary that contains all the (term_id, term) tuple_list
+        # will be sorted later
+        # form : {term_id: [frequence_col, [(document_id, frequence_doc, doc_len)...]]}
         term_id_dict = {}
-        for index, doc in enumerate(collection):
+        for index, doc in enumerate(collection.values()):
             if index % 1000 == 0:
-                print(index)
+                print("GETTING TERM OF INDEX :", index)
+
             for term, frequence in doc.term_bag.items():
                 term_id = term_dict[term]
                 try:
-                    # term_id_dict[term_id] += 1
-                    # {term: [frequence_col, [(document_id, frequence_doc, doc_len)...]]}
                     term_id_dict[term_id][0] += 1
                     term_id_dict[term_id][1].append(
                         (doc.id, frequence, len(doc.term_bag))
                     )
                 except KeyError:
-                    # term_id_dict[term_id] = 1
-                    term_id_dict[term_id] = [1, [(doc.id, frequence, len(doc.term_bag))]]
-        sorted_keys = sorted(term_id_dict.items(), key=operator.itemgetter(0))
+                    term_id_dict[term_id] = [
+                        1,
+                        [(doc.id, frequence, len(doc.term_bag))]
+                    ]
+
+        # all the elements from the collection are in the dictionnary, we now
+        # sort them by term_id
+        sorted_terms = sorted(term_id_dict.items(), key=operator.itemgetter(0))
         # store sorted keys line by line in the file so that lines can be
         # extracted one by one when merging the list
-        with open('temp/' + str(Mapper.output_file), 'a') as collection_file:
-            for k in sorted_keys:
-                # for token, id in term_dict.items():
-                #     if k[0] == id:
-                #         print("term_id", k[0], "word", token)
-                collection_file.write(str(k))
-                collection_file.write('\n')
-        print("FILE FINISHED", Mapper.output_file)
-        Mapper.output_file += 1
-
-    @staticmethod
-    def save_to_disk():
-        pass
-        # write the bloc to the disk
-        # for term_id in term_dict:
-            # emit(term_id, postings (doc_id, term_dict[term_id]))
+        with open(filepath, 'a') as partial_index_file:
+            for k in sorted_terms:
+                partial_index_file.write(str(k))
+                partial_index_file.write('\n')
+        print("FILE FINISHED", filepath)
 
 
 class Reducer(object):
-
+    """
+    Class defining a reducer that takes many blocs as input, defined as text
+    files, and merge them into one bloc with external sorting method
+    """
     @staticmethod
-    def reduce():
-        # open a small amount of each file (the beginning part)
-        # take the first element, output the lowest one to a file
-        # then pick another element from another file
-        # loop
-        # posting_list = []
-        # for posting in postings:
-        #     posting_list.append(posting)
-        # sorted(posting_list)
-        # emit(term_id, posting_list)
-        file_paths = os.listdir('temp/')
-        files = Reducer.open_files(file_paths)
+    def reduce(input_filepaths, output_filepath):
+        """
+        + attributes:
+            - input_filepaths: array containing the filepaths of the different
+            text files containing the partial indexes
+            - output_filepath: path where the final index will be outputted
+        """
+        files = Reducer.open_files(input_filepaths)
 
-        with open('Data/Index/cs276.index', 'w', 1) as output_file:
+        with open(output_filepath, 'w', 1) as output_file:
             buffers = Buffers(files)
+
+            # a few hints here : we get the index entry with the lowest term_id,
+            # then get all the following index entries with the same term_id,
+            # whether they are from the same file or another one.
+            # When we got all those values, we merge all those posting lists
+            # into one, and write the final index entry to a file.
+            # We iterate over all the possible term_id, and stop when the partial
+            # index files are empty.
             while not buffers.isEmpty:
-                # check that we have got all the postings corresponding to the
-                # same id before writing the posting list to the index
                 L = []  # list of entries sharing the same term_id
+                # index entry is like (term_id, [frequence_col, [(document_id, frequence_doc, doc_len)...]])
                 _, index_entry = buffers.update()
                 if index_entry is None:
                     break
@@ -147,11 +214,6 @@ class Reducer(object):
                     buffers.remove_value(min_value)
 
                 # merge the different terms into one
-                # {term: [fr equence_col, [(document_id, frequence_doc, doc_len)...]]}
-                # term_id_dict[term_id][0] += 1
-                # term_id_dict[term_id][1].append(
-                #     (doc.id, frequence, len(doc.term_bag))
-                # )
                 new_entry = (term_id, [0, []])
                 for entry in L:
                     new_entry[1][0] += entry[1][0]
@@ -160,41 +222,36 @@ class Reducer(object):
                             (posting[0], posting[1], posting[2])
                         )
 
-                # then write it
                 output_file.write(str(new_entry))
                 output_file.write('\n')
-                if term_id % 100 == 0:
+                if term_id % 1000 == 0:
                     print("INDEXED_TERM", term_id)
-            print("loop ended")
-        print("closed file & leaving function")
-    # @staticmethod
-    # def select_min_value(choices):
-    #     """Implements the k-way merging : selects the choices with the lowest
-    #     value.
-    #         + choices : array of index
-    #     """
-    #     min_index = 0
-    #     while min_index not in choices:
-    #         min_index += 1
-    #     for i in range(min_index + 1, len(choices)):
-    #         if i in choices and choices[i] < choices[min_index]:
-    #             min_index = i
-    #     return min_index
 
     @staticmethod
-    def open_files(filenames):
+    def open_files(input_filepaths):
         """Opens the files containing the sorted parts of the index.
             + filenames: array of strings, that are the paths to the files
             return: Dictionnary of files
         """
         files = {}
-        for i in range(len(filenames)):
-            files[i] = open('temp/' + filenames[i], 'r', 1)  # select line buffering
+        for i in range(len(input_filepaths)):
+            files[i] = open(input_filepaths[i], 'r', 1)  # select line buffering
         return files
 
 
 class Buffers(object):
     # inspired from https://github.com/spiralout/external-sort
+    """
+    Class that will handle multiple buffers at the time, corresponding to
+    multiple text files. At the beginning the buffers are filled with the first
+    line of each file (one line = one index entry), then we refill them with
+    the next line of the the file that the reducer has used.
+    + attributes:
+        - files: list of File objects that we need to pump the index entries from
+        - buffers: dictionnary of buffers, of the form {file_ref: index_entry}
+        - empty_buffers: set of buffers that are considered as empty, meaning
+        the last line of the corresponding file has been reached
+    """
 
     def __init__(self, files):
         self.files = files
@@ -202,104 +259,65 @@ class Buffers(object):
         self.empty_buffers = set()
 
     def _select_min_value(self, choices):
-        """Implements the k-way merging : selects the choices with the lowest
-        value.
-            + choices : array of index
+        """Implements the k-way merging : selects the index of the choices with
+        the lowest value (temr_id value for us).
+            + choices : dictionnary of {buffer_index: value}
         """
         min_index = -1
-        # print("CHOICES", choices)
-        # while min_index not in choices:
-        #     if self.isEmpty:
-        #         print("Stuck in loop of_select_min_value")
-        #     min_index += 1
-        for an_index in choices: #ensure min_index is in choices
+        for an_index in choices:  # ensure min_index is in choices
             min_index = an_index
             break
-        # for i in range(min_index + 1, len(choices)):
-        #     if i in choices and choices[i] < choices[min_index]:
-        #         min_index = i
         for i in choices:
             if choices[i] < choices[min_index]:
                 min_index = i
         return min_index
 
     def _fill_buffers(self):
-        """Fill in the buffers with data from the partial index files
+        """
+        Fill in the buffers that are empty with data from the partial index
+        files
         """
         for i in range(len(self.buffers)):
-            # TODO : convert the string value to a tuple to sort it
             if self.buffers[i] is None and i not in self.empty_buffers:
-                # self.buffers[i] = self.files[i].readline()
                 line = self.files[i].readline()
                 if line == '':  # EOF
                     self.empty_buffers.add(i)
                     print("EMPTY BUFFERS", self.empty_buffers, len(self.empty_buffers), len(self.files))
                     continue
-                value = ast.literal_eval(line)
-                # print("BLOC", i, "TERM_ID", line[1:2], end='     ')
-                self.buffers[i] = value
+                # converts the string to object : (term_id, [frequence_col, [(document_id, frequence_doc, doc_len)...]])
+                self.buffers[i] = ast.literal_eval(line)  # converts the string
         if self.isEmpty:
             return False
         else:
             return True
 
     def _get_buffers_values(self):
-        # returning the tem_id for sorting
+        """
+        Returns the term_id from each buffer to later pick the lowest
+        """
         return {i: self.buffers[i][0] for i in range(len(self.buffers)) if i not in self.empty_buffers}
 
     def update(self):
+        """
+        Public method that fill the buffers if they are empty, then selects the
+        buffer index with the lowest value.
+        + return: buffer_index_min_value, corresponding_value
+        """
         if self._fill_buffers():
-            # print("ALL_INDEX", self._get_buffers_values(), end='   ')
             min_index = self._select_min_value(self._get_buffers_values())
-            # print("MIN_INDEX", min_index, end='   ')
-            # print("TERM_ID_VALUE", self.buffers[min_index][0])
             return min_index, self.buffers[min_index]
         else:
             return -1, None
 
     def remove_value(self, index):
+        """
+        Removes a value from the buffer designed by the index.
+        """
         self.buffers[index] = None
 
     @property
     def isEmpty(self):
         return len(self.empty_buffers) == len(self.files)  # All files ended
-
-
-# if __name__ == '__main__':
-#
-#
-#     def map(self):
-#         # segmenting the collection into blocks, loading one block in memory
-#         # for directory in os.listdir(self.collection.data_filename):
-#         with open(self.data_filename, 'r') as df:
-#             data = df.read()
-#
-#         # tuple format : (term_id, position)
-#         tuple_list = []
-#
-#
-#
-#
-#         # for i in range(int(len(self.hash_table) / BLOCK_SIZE)):
-#         #     self.threads[i] = WorkerThread(
-#         #         self.hash_table[
-#         #             self.mapped_term_id:self.mapped_term_id + BLOCK_SIZE
-#         #         ]
-#         #     )
-#         #     self.mapped_term_id += BLOCK_SIZE
-#
-#     def reduce(self):
-#         pass
-#
-#
-# class WorkerThread(Thread):
-#
-#     def __init__(self, block):
-#         super().__init__()
-#         self.block = block
-#
-#     def run(self):
-#         print(block)
 
 
 # if __name__ == '__main__':

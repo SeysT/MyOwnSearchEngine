@@ -166,6 +166,12 @@ class MetaDocumentCollection(object):
         if not isDel:
             raise KeyError
 
+    def get_collections(self):
+        col = {}
+        for collection in self.meta_collection.values():
+            col[collection.data_filename] = collection
+        return col.values()
+
     def items(self):
         """This methods wraps the items methods of self.collection"""
         items = []
@@ -177,7 +183,7 @@ class MetaDocumentCollection(object):
         """This methods wraps the values methods of self.collection"""
         values = []
         for collection in self.meta_collection.values():
-            values.append(list(collection.values()))
+            values.append(collection.values())
         return values
 
     def keys(self):
