@@ -1,5 +1,5 @@
 from models.document import CACMDocumentCollection, StanfordDocumentCollection
-from models.bsbi_construction import StanfordReverseIndex, CACMReverseIndex
+from models.reverse_index import StanfordReverseIndex, CACMReverseIndex
 import os
 from datetime import datetime
 

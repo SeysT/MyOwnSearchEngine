@@ -28,7 +28,7 @@ from time import time
 
 from models.document import CACMDocumentCollection, StanfordDocumentCollection
 from models.request import BooleanRequest, VectorialRequest
-from models.bsbi_construction import StanfordReverseIndex, CACMReverseIndex
+from models.reverse_index import StanfordReverseIndex, CACMReverseIndex
 
 
 if __name__ == '__main__':
