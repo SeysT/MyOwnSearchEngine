@@ -1,7 +1,7 @@
 import operator
-import os
-import ast
+import json
 from datetime import datetime
+import linecache
 
 
 class ReverseIndex(object):
@@ -11,91 +11,140 @@ class ReverseIndex(object):
         - reverse_index: contains the reverse index with the following structure:
             {term: [frequence_col, [(document_id, frequence_doc, doc_len)...]]}
         - term_dict: dict that contains all the terms of all the documents and
-        their affected id under the form {term: id}
-        - term_id: static attribute used to keep track of the last attributed id
+        their affected id under the form {term: id} (~ hashing table)
+        - term_id: attribute used to keep track of the last attributed id
+        - name: name of the index (for the file to be exported as name.index)
+        - index_in_memory: tells if the index has been loaded in memory or
+        should be read directly from disk
     + core methods:
-        - save: save the current self.reverse_index in the given filename in a
-        text file
         - load_from_file: load the reverse index contained in the given text
         file
+        - load_hash_table: load the dict {term: id} from the file. Needed to
+        access the index entries
         - create_index: create reverse_index from given document_collection
     + wrapping methods:
-        - __getitem__: return self.reverse_index[key]
-        - __setitem__: self.reverse_index[key] = value
-        - __delitem__: del self.reverse_index[key]
-        - __len__: return len(self.reverse_index)
-        - items: return self.reverse_index.items()
-        - values: return self.reverse_index.values()
-        - keys: return self.reverse_index.keys()
+        - __getitem__: returns the index entry, from self.reverse_index or
+        from the disk if the index has not been loaded
+        - __len__: return len(self.term_dict) (equals to len(self.reverse_index)
+        since there is the same number of terms / term_id by construction)
+        - keys: return self.term_dict.keys(), the list of terms stored in the
+        index
     """
-    term_id = 0
 
-    def __init__(self, document_collection=None):
+    def __init__(self, document_collection=None, name=''):
         """
         We init the reverse_index attribute to an empty dict.
+        If a document collection, we initialize reverse_index calling create_index method.
         """
         self.reverse_index = {}
         self.term_dict = {}
+        self.name = name
+        self.term_id = 0
+        self.index_in_memory = False
         if document_collection:
-            self.parse_all_terms(document_collection)
+            self._parse_all_terms(document_collection)
+            self._save_hash_table()
             self.create_index(document_collection)
 
-    def parse_all_terms(self, document_collection):
+    def _parse_all_terms(self, document_collection):
         """
         This method collects all the terms that exists in all the documents,
-        and give them a unique id
+        and give them a unique id, filling the self.term_dict dictionnary
         """
         raise NotImplementedError
 
     def create_index(self, document_collection):
+        """
+        Creates the index using a MapReduce approach.
+        """
         raise NotImplementedError
 
-    def __getitem__(self, key):
-        """This methods wraps the __getitem__ methods of self.reverse_index"""
-        return self.reverse_index[key]
+    def load_from_file(self, filepath):
+        self.load_hash_table()
+        with open(filepath, 'r') as index_file:
+            line = index_file.readline()
+            i = 0
+            while line != '':  # EOF
+                if i % 1000 == 0:
+                    print("LINE READ : ", i)
+                # entry is like (term_id, [frequence_col, [(document_id, frequence_doc, doc_len)...]])
+                line = index_file.readline()
+                if line == '':  # EOF
+                    break
+                entry = json.loads(line)
+                self.reverse_index[entry[0]] = entry[1]
+                i += 1
+        self.index_in_memory = True
+
+    def _save_hash_table(self):
+        with open('Data/Index/' + self.name + '.hash', 'w') as hash_file:
+            json.dump(self.term_dict, hash_file)
+
+    def load_hash_table(self):
+        with open('Data/Index/' + self.name + '.hash', 'r') as hash_file:
+            self.term_dict = json.load(hash_file)
+
+    def __getitem__(self, term):
+        """Returns the index entry when seeking a term"""
+        term_id = self.term_dict[term]
+        # Note : Here we could decide not to load the entire index in memory
+        # (if it's too large for instance) and access the index file using the
+        # line number, as the file's line number corresponds to the temr_id
+        # by design
+        # Cons : access will be slower since we read the disk
+        if self.index_in_memory:
+            return self.reverse_index[term_id]
+        else:
+            line = linecache.getline('Data/Index/' + self.name + '.index', term_id)
+            entry = json.loads(line)
+            return entry[1]
 
     def __setitem__(self, key, value):
-        """This methods wraps the __setitem__ methods of self.reverse_index"""
-        self.reverse_index[key] = value
+        # self.reverse_index[key] = value
+        raise NotImplementedError
 
     def __delitem__(self, key):
-        """This methods wraps the __delitem__ methods of self.reverse_index"""
-        del self.reverse_index[key]
+        # del self.reverse_index[key]
+        raise NotImplementedError
 
     def items(self):
-        """This methods wraps the items methods of self.reverse_index"""
-        return self.reverse_index.items()
+        # return self.reverse_index.items()
+        raise NotImplementedError
 
     def values(self):
-        """This methods wraps the values methods of self.reverse_index"""
-        return self.reverse_index.values()
+        # return self.reverse_index.values()
+        raise NotImplementedError
 
     def keys(self):
-        """This methods wraps the keys methods of self.reverse_index"""
-        return self.reverse_index.keys()
+        """Returns the list of terms stored in the index"""
+        return self.term_dict.keys()
 
     def __len__(self):
         """This methods wraps the keys methods of self.reverse_index"""
-        return len(self.reverse_index)
+        return len(self.term_dict)
 
 
 class CACMReverseIndex(ReverseIndex):
 
-    def parse_all_terms(self, document_collection):
+    term_id = 0
+
+    def __init__(self, document_collection=None):
+        super().__init__(document_collection, name='cacm')
+
+    def _parse_all_terms(self, document_collection):
         begin = datetime.now()
         for document in document_collection.values():
             for token in document.term_bag:
                 try:
                     self.term_dict[token]  # check if the term already exists
                 except KeyError:
-                    self.term_dict[token] = ReverseIndex.term_id
-                    ReverseIndex.term_id += 1
+                    self.term_dict[token] = self.term_id
+                    self.term_id += 1
         print("======= Generating term id dictionnary time : ", datetime.now() - begin, " =======")
 
     def create_index(self, document_collection):
         """
-        Creates the index using a MapReduce approach. We have only one bloc for
-        that small collection
+        We have only one bloc for that small collection
         """
         begin = datetime.now()
         Mapper.map(
@@ -120,7 +169,10 @@ class CACMReverseIndex(ReverseIndex):
 
 class StanfordReverseIndex(ReverseIndex):
 
-    def parse_all_terms(self, document_collection):
+    def __init__(self, document_collection=None):
+        super().__init__(document_collection, name='cs276')
+
+    def _parse_all_terms(self, document_collection):
         begin = datetime.now()
         for collection in document_collection.values():
             for document in collection:
@@ -128,15 +180,14 @@ class StanfordReverseIndex(ReverseIndex):
                     try:
                         self.term_dict[token]  # check if the term already exists
                     except KeyError:
-                        self.term_dict[token] = ReverseIndex.term_id
-                        ReverseIndex.term_id += 1
+                        self.term_dict[token] = self.term_id
+                        self.term_id += 1
         print("======= Generating term id dictionnary time : ", datetime.now() - begin, " =======")
 
     def create_index(self, meta_document_collection):
         """
-        Creates the index using a MapReduce approach. Each bloc is a
-        sub-collection of Stanford collection (ie a bloc = collection formed by
-        all the files in a folder)
+        Each bloc is a sub-collection of Stanford collection (ie
+        a bloc = collection formed by all the files in a folder)
         """
         begin = datetime.now()
         for collection in meta_document_collection.get_collections():
@@ -154,7 +205,7 @@ class StanfordReverseIndex(ReverseIndex):
         begin = datetime.now()
         # Here we use only one reducer, that is enought to merge the indexes
         # in one time because we read the partial text indexes line by line
-        file_paths = ['temp/' + f for f in os.listdir('temp/')]
+        file_paths = ['temp/' + collection.name + '.index' for collection in meta_document_collection.get_collections()]
         Reducer.reduce(
             file_paths,
             'Data/Index/cs276.index'
@@ -165,7 +216,7 @@ class StanfordReverseIndex(ReverseIndex):
 class Mapper(object):
     """
     Class defining a mapper that takes a bloc, parse it, sort the terms
-    following their term_id and write the result to a text file
+    following their term_id and write the result to a text file as json
     """
 
     @staticmethod
@@ -205,15 +256,16 @@ class Mapper(object):
         # extracted one by one when merging the list
         with open(filepath, 'a') as partial_index_file:
             for k in sorted_terms:
-                partial_index_file.write(str(k))
+                line = json.dumps(k)
+                partial_index_file.write(line)
                 partial_index_file.write('\n')
         print("FILE FINISHED", filepath)
 
 
 class Reducer(object):
     """
-    Class defining a reducer that takes many blocs as input, defined as text
-    files, and merge them into one bloc with external sorting method
+    Class defining a reducer that takes many blocs as input, defined as json
+    text files, and merge them into one bloc with external sorting method.
     """
     @staticmethod
     def reduce(input_filepaths, output_filepath):
@@ -260,7 +312,7 @@ class Reducer(object):
                             (posting[0], posting[1], posting[2])
                         )
 
-                output_file.write(str(new_entry))
+                output_file.write(json.dumps(new_entry))
                 output_file.write('\n')
                 if term_id % 1000 == 0:
                     print("INDEXED_TERM", term_id)
@@ -323,7 +375,7 @@ class Buffers(object):
                     print("EMPTY BUFFERS", self.empty_buffers, len(self.empty_buffers), len(self.files))
                     continue
                 # converts the string to object : (term_id, [frequence_col, [(document_id, frequence_doc, doc_len)...]])
-                self.buffers[i] = ast.literal_eval(line)  # converts the string
+                self.buffers[i] = json.loads(line)
         if self.isEmpty:
             return False
         else:
@@ -356,16 +408,3 @@ class Buffers(object):
     @property
     def isEmpty(self):
         return len(self.empty_buffers) == len(self.files)  # All files ended
-
-
-# if __name__ == '__main__':
-#
-#     collection = CACMDocumentCollection(
-#         data_filename='Data/CACM/cacm.all',
-#         stop_list_filename='Data/CACM/common_words',
-#         load_on_creation=True,
-#     )
-#
-#     rv_index = ReverseIndex(collection)
-#     rv_index.create_index()
-#     print("END")
