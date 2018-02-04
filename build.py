@@ -22,7 +22,7 @@ if __name__ == '__main__':
     print("======= Total building time : ", datetime.now() - begin, " =======")
 
     begin = datetime.now()
-    if 'CS276' in os.listdir('Data/Collection'):
+    if os.listdir('Data/Collection/CS276'):
         stanford_document_collection = StanfordDocumentCollection()
         stanford_document_collection.load_from_dir('Data/Collection/CS276')
     else:

@@ -8,7 +8,7 @@ from models.document import StanfordDocumentCollection
 
 if __name__ == '__main__':
 
-    if 'CS276' in os.listdir('Data/Collection'):
+    if os.listdir('Data/Collection/CS276'):
         document_collection = StanfordDocumentCollection(
             data_dirname='Data/CS276',
             load_on_creation=False
