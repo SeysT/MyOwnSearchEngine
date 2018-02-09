@@ -1,6 +1,7 @@
 from math import sqrt
 
 from models.parser import BooleanParser, Tokenizer
+from models.ponderation import tf_df
 
 
 class Request(object):
@@ -52,7 +53,7 @@ class VectorialRequest(Request):
             elt.lower() for elt in self.raw_request.split(' ') if elt.lower() in index.keys()
         ]
 
-    def find_results(self, index, weight_function=lambda doc_len, tf, df: 1 * tf * df):
+    def find_results(self, index, weight_function=tf_df):
         """
         Apply algorithm to find results from index.
         + params:
