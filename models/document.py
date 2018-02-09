@@ -159,9 +159,9 @@ class CACMDocument(Document):
     tokenized_fields = [
         'title_tokenized',
         'summary_tokenized',
-        'key_words_tokenized'
+        'key_words_tokenized',
     ]
-    signs_to_remove = [',', '\'', ';', ':', '.', '?', '!']
+    signs_to_remove = [',', '\'', ';', ':', '.', '?', '!', '(', ')']
     fields_mapping = {
         '.T': 'title',
         '.W': 'summary',
@@ -175,17 +175,10 @@ class CACMDocument(Document):
 
     def __init__(self, id):
         super(CACMDocument, self).__init__(id)
-        self.title = ''
-        self.title_tokenized = []
-        self.summary = ''
-        self.summary_tokenized = []
-        self.publication_date = ''
-        self.authors = ''
-        self.add_date = ''
-        self.references = ''
-        self.key_words = ''
-        self.key_words_tokenized = []
-        self.citations = ''
+        for field in self.fields_mapping.values():
+            setattr(self, field, '')
+        for tokenized_field in self.tokenized_fields:
+            setattr(self, tokenized_field, [])
 
     def tokenize_doc(self):
         for attr in CACMDocument.tokenized_fields:
