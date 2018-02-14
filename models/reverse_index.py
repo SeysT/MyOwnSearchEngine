@@ -96,7 +96,8 @@ class ReverseIndex(object):
         if self.index_in_memory:
             return self.reverse_index[term_id]
         else:
-            line = linecache.getline(os.path.join('Data', 'Index',  self.name) + '.index', term_id)
+            # entry is like (term_id, [frequence_col, [(document_id, frequence_doc, doc_len)...]])
+            line = linecache.getline(os.path.join('Data', 'Index',  self.name) + '.index', term_id + 1)
             entry = json.loads(line)
             return entry[1]
 
