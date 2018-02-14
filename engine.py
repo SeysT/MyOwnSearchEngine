@@ -25,6 +25,7 @@ Options for CACM collection:
 from docopt import docopt
 
 from time import time
+from os import path
 
 from models.document import CACMDocumentCollection, StanfordDocumentCollection
 from models.request import BooleanRequest, VectorialRequest
@@ -34,9 +35,6 @@ from models.reverse_index import StanfordReverseIndex, CACMReverseIndex
 if __name__ == '__main__':
     args = docopt(__doc__, version='My Own Search Engine 0.1')
 
-    # TODO : I think here we should enforce that the collection and the
-    # index have already been created, this will be way too long otherwise
-    # (like 30 min for stanford collection)
     start_time = time()
     if args['cacm']:
         if args['--collection']:
@@ -48,20 +46,16 @@ if __name__ == '__main__':
                 duration
             ))
         else:
-            # TODO : we should not rebuild the collection here, juste take one
-            # with a default path
-            collection = CACMDocumentCollection(
-                source_data_filepath='Data/CACM/cacm.all',
-                stop_list_filepath='Data/CACM/common_words',
-                load_on_creation=True,
-            )
-            duration = (time() - start_time)
-            print('Collection has been created in {:.2f} seconds.'.format(duration))
-
+            collection = CACMDocumentCollection()
+            collection.load_from_file(path.join('Data', 'Collection', 'cacm.collection'))
+            duration = (time() - start_time) * 1000
+            print('Collection has been loaded from file {} in {:.2f} milliseconds.'.format(
+                path.join('Data', 'Collection', 'cacm.collection'),
+                duration
+            ))
         start_time = time()
         if args['--index']:
             reverse_index = CACMReverseIndex()
-            # reverse_index._load_hash_table()
             reverse_index.load_from_file(args['--index'])
             duration = (time() - start_time) * 1000
             print('Index has been loaded from file {} in {:.2f} milliseconds.'.format(
@@ -69,12 +63,12 @@ if __name__ == '__main__':
                 duration
             ))
         else:
-            # TODO : we should not rebuild the index here, juste take one
-            # with a default path
-            reverse_index = CACMReverseIndex(document_collection=collection)
-            duration = (time() - start_time)
-            print('Index has been created in {:.2f} seconds.'.format(duration))
-
+            reverse_index = CACMReverseIndex()
+            reverse_index.load_hash_table()
+            duration = (time() - start_time) * 1000
+            print('Hash Table has been loaded from file in {:.2f} milliseconds.'.format(
+                duration
+            ))
     elif args['cs276']:
         if args['--collection']:
             collection = StanfordDocumentCollection()
@@ -82,6 +76,14 @@ if __name__ == '__main__':
             duration = (time() - start_time) * 1000
             print('Collection has been loaded from file {} in {:.2f} milliseconds.'.format(
                 args['--collection'],
+                duration
+            ))
+        else:
+            collection = StanfordDocumentCollection()
+            collection.load_from_dir(path.join('Data', 'Collection', 'CS276'))
+            duration = (time() - start_time) * 1000
+            print('Collection has been loaded from file {} in {:.2f} milliseconds.'.format(
+                path.join('Data', 'Collection', 'CS276'),
                 duration
             ))
 
