@@ -87,12 +87,12 @@ class VectorialRequest(Request):
         ndj = {
             posting_id: 0
             for token in self.parsed_request
-            for posting_id, _, _ in self.index[token][1]
+            for posting_id, _ in self.index[token][1]
         }
         s = {
             posting_id: 0
             for token in self.parsed_request
-            for posting_id, _, _ in self.index[token][1]
+            for posting_id, _ in self.index[token][1]
         }
         for token in self.parsed_request:
             wq = weight_function(
@@ -102,7 +102,7 @@ class VectorialRequest(Request):
                 document_id=-1
             )
             nq += wq ** 2
-            for posting_id, doc_frequence, doc_len in self.index[token][1]:
+            for posting_id, doc_frequence in self.index[token][1]:
                 wj = weight_function(
                     tf=doc_frequence,
                     df=self.index[token][0],
