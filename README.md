@@ -52,6 +52,35 @@ python engine.py cacm vectorial information --collection='Data/Collection/cacm.c
 
 L'ensemble des classes et des fonctions utiles sont documentées sous forme de docstring dans les fichiers.
 
+### Parsing des collections (`models/document.py`)
+Nous avons des classes qui représentent chaque document et permettent de le parser (particulièrement pour la collection CACM qui a besoin d'être tokenisée).
+A chaque document on attribue un id (entier incrémenté) pour l'identifier de manière unique, et réduire la taille de l'index (plutôt que d'utiliser le nom du fichier pour la collection Stanford notamment)
+
+Ensuite nous utilisons des classes représentant les collections de document, ce qui permet de les sauvegarder dans des fichiers uniques, de les charger plus rapidement en mémoire, et d'aggréger des données pour répondre aux questions d'analyse des collections.
+La collection Stanford utilise également une classe MetaDocumentCollection qui aggrège plusieurs sous-collections (qui correspondent en fait aux dossiers de la collection). Elle garde la même interface externe qu'une collection (permet d'uniformiser les accès pour les requêtes par exemple) en retournant les mêmes objets, et permet d'avoir une séparation des blocs pour l'approche MapReduce lors de la construction de l'index.
+
+
+### Construction de l'index inversé : BSBI & approche MapReduce ( `models/reverse_index.py`)
+La construction de l'index inversé suit l'algo BSBI :
+- on génère une table terme/id (qui est enregistrée en JSON et chargée pour chaque requête)
+- pour chaque bloc on aggrège les éléments de la collection par term_id, puis on les trie. On écrit la sortie dans un fichier json temporaire. Dans notre implémentation actuelle, les blocs sont processés 1 par 1 à la suite.
+- pendant la phase de reducing, on ouvre tous les fichiers JSON temporaires crées, et on fait un k-way merge en fusionnant les entrées ayant le même term_id, avant de les écrire dans un dernier fichier. Pour s'assurer que la sortie est bien triée, on utilise des buffers contenant la dernière ligne non lue de chaque fichier intermédiaire et on prend le buffer ayant le term_id minimal.
+
+
+### Parsing de la requête (`engine.py`, `models/parser.py` et `models/request.py`)
+TODO
+
+L'accès aux clefs de l'index inversé se fait par table de hachage (une table simple et peu volumineuse reliant un terme et son id attribué arbitrairement). Elle peut se faire soit directement en mémoire si l'index a été chargé (mais consommateur de ressources), soit directement dans le fichier json triés du disque.
+
+### Pondération (`models/poderation.py` et `models/request.py`)
+TODO
+
+### Remarques
+Le projet n'est pas totalement optimisé par manque de temps mais voici des pistes d'améliorations que nous avons exploré sans les finaliser :
+- pour le mapping lors de la création de l'index, on peut utiliser du multiprocessing pour traiter plusieurs blocs en même temps (plutôt que les parser successivement), surtout vu que notre implémentation, le facteur limitant est la puissance de calcul plutôt que la mémoire.
+- nous avons utilisé qu'un seul reducer vu que la quantité de données à assembler n'est pas très grande, mais optimalement on devrait trier les entrées de l'index dans différents fichiers par term_id avant d'assembler des différents fichiers en un seul avec plusieurs reducers
+- on peut compresser l'index inversé
+- on peut séparer les étapes de chargement en mémoire de l'index inversé et de la requête de l'utilisateur dans le CLI pour pouvoir faire plusieurs requêtes
 
 
 ## Questions et sujet
