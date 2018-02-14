@@ -2,7 +2,11 @@ import operator
 import json
 import os
 from datetime import datetime
+from multiprocessing import Process, Pool
+import multiprocessing
 import linecache
+
+MAX_THREAD_NUMBER = 3
 
 
 class ReverseIndex(object):
@@ -176,16 +180,44 @@ class StanfordReverseIndex(ReverseIndex):
         a bloc = collection formed by all the files in a folder)
         """
         begin = datetime.now()
-        for collection in meta_document_collection.get_collections():
+        mappers = []
+
+        with Pool(processes=2) as pool:
+            tasks = []
+            for collection in meta_document_collection.get_collections():
+                tasks.append((
+                    Mapper.map,
+                    (
+                        self.term_dict,
+                        collection,
+                        os.path.join('temp', collection.name) + '.index'
+                    )
+                ))
+            print("2")
+            results = [pool.apply_async(calculate, t) for t in tasks]
+            print('Ordered results using pool.apply_async():')
+            for r in results:
+                print('\t', r.get())
+        # for collection in meta_document_collection.get_collections():
             # print(collection)
             # send collections as blocs to the mapper
-            Mapper.map(
-                self.term_dict,
-                collection,
-                os.path.join('temp', collection.name) + '.index'
-            )
+            # Mapper.map(
+            #     self.term_dict,
+            #     collection,
+            #     os.path.join('temp', collection.name) + '.index'
+            # )
+            # mappers.append(Mapper(
+            #     self.term_dict,
+            #     collection,
+            #     os.path.join('temp', collection.name) + '.index'
+            # ))
+        # started_mappers = mappers
+        # i = 0
+        # while started_mappers:
+        #     mappers[i].start()
+        # for mapper in mappers:
+        #     mapper.join()
         print("======= Time for mapping : ", datetime.now() - begin, " =======")
-
         # it takes some time before the mapping is finished and the reducing
         # phase can starts
         begin = datetime.now()
@@ -199,11 +231,25 @@ class StanfordReverseIndex(ReverseIndex):
         print("======= Time for reducing : ", datetime.now() - begin, " =======")
 
 
-class Mapper(object):
+def calculate(func, args):
+    result = func(*args)
+    return '%s says that %s%s = %s' % (
+        multiprocessing.current_process().name,
+        func.__name__, args, result
+    )
+
+
+class Mapper(Process):
     """
     Class defining a mapper that takes a bloc, parse it, sort the terms
     following their term_id and write the result to a text file as json
     """
+
+    def __init__(self, term_dict, collection, filepath):
+        super().__init__()
+        self.term_dict = term_dict
+        self.collection = collection
+        self.filepath = filepath
 
     @staticmethod
     def map(term_dict, collection, filepath):
@@ -218,11 +264,14 @@ class Mapper(object):
         # will be sorted later
         # form : {term_id: [frequence_col, [(document_id, frequence_doc, doc_len)...]]}
         term_id_dict = {}
+        # for index, doc in enumerate(self.collection.values()):
         for index, doc in enumerate(collection.values()):
             if index % 1000 == 0:
-                print("GETTING TERM OF INDEX :", index)
+                # print("FILE :", self.filepath, "GETTING TERM OF INDEX :", index)
+                print("FILE :", filepath, "GETTING TERM OF INDEX :", index)
 
             for term, frequence in doc.term_bag.items():
+                # term_id = self.term_dict[term]
                 term_id = term_dict[term]
                 try:
                     term_id_dict[term_id][0] += 1
@@ -240,11 +289,13 @@ class Mapper(object):
         sorted_terms = sorted(term_id_dict.items(), key=operator.itemgetter(0))
         # store sorted keys line by line in the file so that lines can be
         # extracted one by one when merging the list
+        # with open(self.filepath, 'a') as partial_index_file:
         with open(filepath, 'a') as partial_index_file:
             for k in sorted_terms:
                 line = json.dumps(k)
                 partial_index_file.write(line)
                 partial_index_file.write('\n')
+        # print("FILE FINISHED", self.filepath)
         print("FILE FINISHED", filepath)
 
 
