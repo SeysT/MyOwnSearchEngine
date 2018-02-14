@@ -53,7 +53,7 @@ def tf_idf(doc_len, tf, df):
     - pdf = log10(doc_len / df)
     - n = 1
     """
-    return tf * log10(doc_len / df)
+    return tf * log10(1 + doc_len / df)
 
 
 def tf_idf_normalized(doc_len, tf, df):
@@ -62,7 +62,7 @@ def tf_idf_normalized(doc_len, tf, df):
     - pdf = log10(doc_len / df)
     - n = (1 / doc_len)
     """
-    return tf * log10(doc_len / df) * (1 / doc_len)
+    return tf * log10(1 + doc_len / df) * (1 / doc_len)
 
 
 def logtf_idf(doc_len, tf, df):
@@ -71,7 +71,7 @@ def logtf_idf(doc_len, tf, df):
     - pdf = log10(doc_len / df)
     - n = 1
     """
-    return (1 + log10(tf)) * log10(doc_len / df)
+    return (1 + log10(tf)) * log10(1 + doc_len / df)
 
 
 def logtf_idf_normalized(doc_len, tf, df):
@@ -80,4 +80,4 @@ def logtf_idf_normalized(doc_len, tf, df):
     - pdf = log10(doc_len / df)
     - n = (1 / doc_len)
     """
-    return (1 + log10(tf)) * log10(doc_len / df) * (1 / doc_len)
+    return (1 + log10(tf)) * log10(1 + doc_len / df) * (1 / doc_len)

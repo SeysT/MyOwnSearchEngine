@@ -2,10 +2,67 @@ from os import path, listdir
 
 import matplotlib.pyplot as plt
 
-from models.reverse_index import CACMReverseIndex
+import models.ponderation as ponderation_module
+
 from models.document import CACMDocumentCollection
 from models.request import VectorialRequest
-from models.measure import average_precision, precision, recall
+from models.reverse_index import CACMReverseIndex
+from models.measure import average_precision, r_measure, f_measure, e_measure, precision, recall
+
+
+def get_measures(request_collection, ponderation):
+    print('Calculating measures for ponderation {}...'.format(ponderation))
+    mean_average_precision = []
+    mean_r_measure = []
+    mean_f_measure = []
+    mean_e_measure = []
+    all_precisions = []
+    all_recalls = [i / 100 for i in range((1 * 100) + 1)]
+
+    for document in request_collection.values():
+        request = ' '.join(document.summary_tokenized)
+
+        found_documents = VectorialRequest(request).return_results(
+            index,
+            getattr(ponderation_module, ponderation)
+        )
+        try:
+            relevant_documents = relevant_document_dict[document.id]
+        except KeyError:
+            continue
+
+        mean_average_precision.append(average_precision(relevant_documents, found_documents))
+        mean_r_measure.append(r_measure(relevant_documents, found_documents))
+        mean_f_measure.append(f_measure(relevant_documents, found_documents))
+        mean_e_measure.append(e_measure(relevant_documents, found_documents))
+
+        document_precision = [0 for _ in range((1 * 100) + 1)]
+        for i, _ in enumerate(found_documents, 1):
+            current_precision = precision(relevant_documents, found_documents[:i])
+            current_recall = round(recall(relevant_documents, found_documents[:i]), 2)
+
+            document_precision[all_recalls.index(current_recall)] = max(
+                document_precision[all_recalls.index(current_recall)],
+                current_precision
+            )
+
+        for i in range(0, len(document_precision) - 1):
+            document_precision[i] = max(document_precision[i], max(document_precision[i + 1:]))
+
+        all_precisions.append(document_precision)
+
+    all_precisions = [sum(elt) / len(elt) for elt in zip(*all_precisions)]
+    mean_average_precision = sum(mean_average_precision) / len(mean_average_precision)
+    mean_r_measure = sum(mean_r_measure) / len(mean_r_measure)
+    mean_f_measure = sum(mean_f_measure) / len(mean_f_measure)
+    mean_e_measure = sum(mean_e_measure) / len(mean_e_measure)
+
+    return all_recalls, all_precisions, {
+        'mean_average_precision': mean_average_precision,
+        'mean_r_measure': mean_r_measure,
+        'mean_f_measure': mean_f_measure,
+        'mean_e_measure': mean_e_measure
+    }
 
 
 if __name__ == '__main__':
@@ -46,46 +103,27 @@ if __name__ == '__main__':
         load_on_creation=True,
     )
 
-    mean_average_precision = []
-    all_precisions = []
-    all_recalls = [i / 100 for i in range((1 * 100) + 1)]
-
-    for document in request_collection.values():
-        print('Calculating recall and precisions for request {}...'.format(document.id))
-        request = ' '.join(document.summary_tokenized)
-
-        found_documents = VectorialRequest(request).return_results(index)
-        try:
-            relevant_documents = relevant_document_dict[document.id]
-        except KeyError:
-            continue
-
-        mean_average_precision.append(average_precision(relevant_documents, found_documents))
-
-        document_precision = [0 for _ in range((1 * 100) + 1)]
-        for i, _ in enumerate(found_documents, 1):
-            current_precision = precision(relevant_documents, found_documents[:i])
-            current_recall = round(recall(relevant_documents, found_documents[:i]), 2)
-
-            document_precision[all_recalls.index(current_recall)] = max(
-                document_precision[all_recalls.index(current_recall)],
-                current_precision
-            )
-
-        for i in range(0, len(document_precision) - 1):
-            document_precision[i] = max(document_precision[i], max(document_precision[i + 1:]))
-
-        all_precisions.append(document_precision)
-
-    print('Aggregating results for all requests...')
-    all_precisions = [sum(elt) / len(elt) for elt in zip(*all_precisions)]
-
     plt.xlabel('recall')
     plt.ylabel('precision')
     plt.title('Precision Recall')
     plt.axis([0, 1, 0, 1])
-    plt.plot(all_recalls, all_precisions)
+
+    measures_by_ponderation = {}
+
+    for ponderation in ponderation_module.__all__:
+        all_recalls, all_precisions, measures = get_measures(request_collection, ponderation)
+        plt.plot(all_recalls, all_precisions, label=ponderation)
+        measures_by_ponderation[ponderation] = measures
+
+    plt.legend()
     plt.show()
 
-    mean_average_precision = sum(mean_average_precision) / len(mean_average_precision)
-    print('mean_average_precision : {}'.format(mean_average_precision))
+    print('| Ponderation | Mean Average Precision | R-Measure | F-Measure | E-Measure |')
+    for ponderation, measures in measures_by_ponderation.items():
+        print('| {} | {:.4f} | {:.4f} | {:.4f} | {:.4f} |'.format(
+            ponderation,
+            measures['mean_average_precision'],
+            measures['mean_r_measure'],
+            measures['mean_f_measure'],
+            measures['mean_e_measure'],
+        ))
