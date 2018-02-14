@@ -96,13 +96,13 @@ class MetaDocumentCollection(object):
 
     def save(self, dirpath):
         for collection in self.meta_collection.values():
-            with open(dirpath + '/' + collection.name + '.collection', 'wb') as collection_file:
+            with open(os.path.join(dirpath, collection.name) + '.collection', 'wb') as collection_file:
                 pickler = pickle.Pickler(collection_file)
                 pickler.dump(collection)
 
     def load_from_dir(self, dirpath):
         for file in os.listdir(dirpath):
-            with open(dirpath + '/' + file, 'rb') as collection_file:
+            with open(os.path.join(dirpath, file), 'rb') as collection_file:
                 depickler = pickle.Unpickler(collection_file)
                 self.meta_collection[file] = depickler.load()
         self.generate_vocabulary()
@@ -114,6 +114,14 @@ class MetaDocumentCollection(object):
         self._generate_vocabulary()
         self._generate_vocabulary_size()
         self._generate_token_number()
+
+    def generate_half_document_collection(self):
+        for coll in self.get_collections():
+            coll.collection = {
+                key: value
+                for key, value
+                in list(coll.collection.items())[:len(coll.collection) // 2]
+            }
 
     def _generate_vocabulary(self):
         self.vocabulary = {}
@@ -257,9 +265,9 @@ class StanfordDocumentCollection(MetaDocumentCollection):
         for directory in os.listdir(self.data_dirpath):
             print("DIRECTORY", directory)
             collection = DocumentCollection(name=directory)
-            for filename in os.listdir(self.data_dirpath + '/' + directory):
+            for filename in os.listdir(os.path.join(self.data_dirpath, directory)):
 
-                with open(self.data_dirpath + '/' + directory + '/' + filename, 'r')as df:
+                with open(os.path.join(self.data_dirpath, directory, filename), 'r')as df:
                     data = df.read()
 
                 tokens = [token for token in data.split()]

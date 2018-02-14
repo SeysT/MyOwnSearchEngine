@@ -1,5 +1,6 @@
 import operator
 import json
+import os
 from datetime import datetime
 import linecache
 
@@ -77,11 +78,11 @@ class ReverseIndex(object):
         self.index_in_memory = True
 
     def _save_hash_table(self):
-        with open('Data/Index/' + self.name + '.hash', 'w') as hash_file:
+        with open(os.path.join('Data', 'Index', self.name) + '.hash', 'w') as hash_file:
             json.dump(self.term_dict, hash_file)
 
     def load_hash_table(self):
-        with open('Data/Index/' + self.name + '.hash', 'r') as hash_file:
+        with open(os.path.join('Data', 'Index', self.name) + '.hash', 'r') as hash_file:
             self.term_dict = json.load(hash_file)
 
     def __getitem__(self, term):
@@ -95,25 +96,9 @@ class ReverseIndex(object):
         if self.index_in_memory:
             return self.reverse_index[term_id]
         else:
-            line = linecache.getline('Data/Index/' + self.name + '.index', term_id)
+            line = linecache.getline(os.path.join('Data', 'Index') + self.name + '.index', term_id)
             entry = json.loads(line)
             return entry[1]
-
-    def __setitem__(self, key, value):
-        # self.reverse_index[key] = value
-        raise NotImplementedError
-
-    def __delitem__(self, key):
-        # del self.reverse_index[key]
-        raise NotImplementedError
-
-    def items(self):
-        # return self.reverse_index.items()
-        raise NotImplementedError
-
-    def values(self):
-        # return self.reverse_index.values()
-        raise NotImplementedError
 
     def keys(self):
         """Returns the list of terms stored in the index"""
@@ -150,7 +135,7 @@ class CACMReverseIndex(ReverseIndex):
         Mapper.map(
             self.term_dict,
             document_collection,
-            'temp/' + document_collection.name + '.index'
+            os.path.join('temp', document_collection.name) + '.index'
         )
         print("======= Time for mapping : ", datetime.now() - begin, " =======")
 
@@ -159,10 +144,10 @@ class CACMReverseIndex(ReverseIndex):
         begin = datetime.now()
         # Here we use only one reducer, that is enought to merge the indexes
         # in one time because we read the partial text indexes line by line
-        file_paths = ['temp/' + document_collection.name + '.index']
+        file_paths = [os.path.join('temp', document_collection.name) + '.index']
         Reducer.reduce(
             file_paths,
-            'Data/Index/cacm.index'
+            os.path.join('Data', 'Index', 'cacm.index')
         )
         print("======= Time for reducing : ", datetime.now() - begin, " =======")
 
@@ -196,7 +181,7 @@ class StanfordReverseIndex(ReverseIndex):
             Mapper.map(
                 self.term_dict,
                 collection,
-                'temp/' + collection.name + '.index'
+                os.path.join('temp', collection.name) + '.index'
             )
         print("======= Time for mapping : ", datetime.now() - begin, " =======")
 
@@ -205,10 +190,10 @@ class StanfordReverseIndex(ReverseIndex):
         begin = datetime.now()
         # Here we use only one reducer, that is enought to merge the indexes
         # in one time because we read the partial text indexes line by line
-        file_paths = ['temp/' + collection.name + '.index' for collection in meta_document_collection.get_collections()]
+        file_paths = [os.path.join('temp', collection.name) + '.index' for collection in meta_document_collection.get_collections()]
         Reducer.reduce(
             file_paths,
-            'Data/Index/cs276.index'
+            os.path.join('Data', 'Index', 'cs276.index')
         )
         print("======= Time for reducing : ", datetime.now() - begin, " =======")
 
