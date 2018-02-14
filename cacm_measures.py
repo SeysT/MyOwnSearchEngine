@@ -22,8 +22,8 @@ def get_measures(request_collection, ponderation):
     for document in request_collection.values():
         request = ' '.join(document.summary_tokenized)
 
-        found_documents = VectorialRequest(request).return_results(
-            index,
+        found_documents = VectorialRequest(index, collection).return_results(
+            request,
             getattr(ponderation_module, ponderation)
         )
         try:
