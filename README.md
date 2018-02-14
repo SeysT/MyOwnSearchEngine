@@ -1,30 +1,72 @@
 # Projet de moteur de recherche - RI Web
 
+## Instructions pour exécuter le Projet
+
+### Installation
+
+Pour faciliter la mise en place du projet, nous utilisons l'outil make :
+
+```
+make install
+```
+Cela téléchargera les collections CACM et Stanford CS276 nécéssaires, installera les librairies python3 utilisées, créera les dossiers nécéssaires à la bonne éxécution du code, construira les collections et les index inversés nécéssaires.
+Les collections brutes sont stockées dans Data/CACM et Data/CS276 (fichiers texte), les collections parsées sont stockées sous forme binaire pour réutilisation du programme dans Data/Collection, et les index inversés et les tables de correspondence token / id dans Data/Index (sous forme texte/json).
+
+Le temps total de construction est d'environ 25 min sur un ordinateur moyen, et consomme jusqu'à 1.7GB de mémoire vive.
+
+
+### Analyse
+
+Une fois le projet buildé, il est possible d'exécuter les fichiers `cacm_questions.py` et `stanford_questions.py` pour générer les réponses aux questions posées dans le sujet (détaillées plus bas dans ce README), et d'exécuter le fichier `cacm_measures.py` pour obtenir les résultats des mesures de pertinence.
+
+### Execution de requêtes
+
+Le fichier `engine.py` est notre moteur de requête. Voici le mode d'emploi du CLI :
+```
+Usage:
+    engine.py cacm (vectorial | boolean) <request> [--collection=<filepath>]
+                                                   [--index=<filepath>]
+                                                   [--results=<len>]
+    engine.py cs276 (vectorial | boolean) <request> [--collection=<filepath>]
+                                                    [--index=<filepath>]
+                                                    [--results=<len>]
+    engine.py (-h | --help)
+    engine.py --version
+
+General options:
+    -h --help                   Show this screen.
+    --version                   Show version.
+    -r --results=<len>          Number of results to display [default: 10].
+```
+
+Préciser la collection permet de la charger en mémoire à partir du fichier binaire plutôt que de la reconstruire.
+Préciser l'index inversé permet au programme de réaliser des requête plus rapidement, mais implique le chargement en mémoire de l'index (peut consommer jusqu'à 3-4GB de RAM). Si cette option n'est pas précisée, l'index n'est pas chargé en mémoire et les recherches de correspondances document / terme se font directement sur le disque (lecture dans un fichier JSON) donc sont plus lentes.
+
+Exemple de requête :
+```
+python engine.py cacm vectorial information --collection='Data/Collection/cacm.collection' --index='Data/Index/cacm.index'
+```
+
+
+## Structure du projet
+
+L'ensemble des classes et des fonctions utiles sont documentées sous forme de docstring dans les fichiers.
+
+
+
 ## Questions et sujet
 
 Pour chaque collection répondre aux questions suivantes :
 
-1. Question 1 : Combien y-a-t-il de tokens dans la collection ?
-2. Question 2 : Quelle est la taille du vocabulaire ?
-3. Question 3 : Calculer le nombre total de tokens et la taille du vocabulaire pour la moitié de la
+1. Combien y-a-t-il de tokens dans la collection ?
+2. Quelle est la taille du vocabulaire ?
+3. Calculer le nombre total de tokens et la taille du vocabulaire pour la moitié de la
 collection et utiliser les résultats avec les deux précédents pour déterminer les paramètres k et b de la
 loi de Heap.
-4. Question 4 : Estimer la taille du vocabulaire pour une collection de 1 million de tokens (pour chaque
+4. Estimer la taille du vocabulaire pour une collection de 1 million de tokens (pour chaque
 collection).
-5. Question 5 : Tracer le graphe fréquence (f ) vs rang (r) pour tous les tokens de la collection. Tracer
+5. Tracer le graphe fréquence (f ) vs rang (r) pour tous les tokens de la collection. Tracer
 aussi le graphe log(f ) vs log(r).
-
-## ODG sur les collections données
-
-### CACM
-- nb_tokens = 100 000 ... 250 000
-- taille_voc = 9 000
-- k = 20 ... 40
-- b = 0,4 ... 0,5
-
-### Stanford
-- nb_tokens = 25 000 000
-- taille_voc = 400 000
 
 ## Réponses aux questions pour la collection CACM
 
@@ -73,33 +115,3 @@ Grâce aux paramètres obtenus à la question précédente, si la collection CS2
 **Question 5 :**
 
 ![Graphe des fréquences en fonction du rang de chaque token de la collection](https://github.com/SeysT/MyOwnSearchEngine/blob/master/Data/Answers/cs_276_answer_question_5.png)
-
-## TODO
-
-- [x] Construire CLI booléen
-- [x] Construire CLI vectoriel
-
-### Collection CACM
-
-- [x] Identifier documents, puis les opérandes
-- [x] Tokeniser les élements
-- [x] Comparer avec la stop list
-- [x] Construire l'index inversé
-- [x] Prévoir un système d'import / export d'index dans un fichier pour sauvegarde
-- [x] Ecrire l'algo de recherche vectoriel
-- [x] Ecrire l'algo de recherche booléen
-- [ ] Ecrire les méthodes de pondération pour une requete
-- [x] Afficher les informations de performance pour une requete
-- [ ] Créer des test de pertinence : courbe rappel/précision, F-Measure, E-Measure et R-Measure, Mean Average Precision
-
-### Collection Stanford
-
-- [x] Charger les documents de la collection
-- [x] Indexer la collection stanford avec une reprsentation par bloc, et avec une approche map-reduce pour l'indexation des blocs , algo BSBI -> Yoann
-- [x] Prévoir un système d'import / export d'index dans un fichier pour sauvegarde
-- [ ] Adapter l'algo de recherche vectoriel de CACM
-- [ ] Adapter l'algo de recherche booléen de CACM
-- [ ] Ecrire les méthodes de pondération pour une requete
-- [x] Afficher les informations de performance pour une requete
-- [ ] Créer des test de pertinence : courbe rappel/précision, F-Measure, E-Measure et R-Measure, Mean Average Precision
-- [ ] Compresser l'index inversé
