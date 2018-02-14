@@ -95,7 +95,7 @@ Grâce aux paramètres obtenus à la question précédente, si la collection CS2
 ### Collection Stanford
 
 - [x] Charger les documents de la collection
-- [ ] Indexer la collection stanford avec une reprsentation par bloc, et avec une approche map-reduce pour l'indexation des blocs , algo BSBI -> Yoann
+- [x] Indexer la collection stanford avec une reprsentation par bloc, et avec une approche map-reduce pour l'indexation des blocs , algo BSBI -> Yoann
 - [x] Prévoir un système d'import / export d'index dans un fichier pour sauvegarde
 - [ ] Adapter l'algo de recherche vectoriel de CACM
 - [ ] Adapter l'algo de recherche booléen de CACM

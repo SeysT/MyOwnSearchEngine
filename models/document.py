@@ -6,20 +6,21 @@ from nltk.tokenize import word_tokenize
 
 class DocumentCollection(object):
 
-    def __init__(self, data_filename='', load_on_creation=False):
-        self.data_filename = data_filename
+    def __init__(self, source_data_filepath='', name='', load_on_creation=False):
+        self.source_data_filepath = source_data_filepath
         self.collection = {}
+        self.name = name
         if load_on_creation:
             self.load_collection()
             self.generate_vocabulary()
 
-    def save(self, filename):
-        with open(filename, 'wb') as collection_file:
+    def save(self, filepath):
+        with open(filepath, 'wb') as collection_file:
             pickler = pickle.Pickler(collection_file)
             pickler.dump(self.collection)
 
-    def load_from_file(self, filename):
-        with open(filename, 'rb') as collection_file:
+    def load_from_file(self, filepath):
+        with open(filepath, 'rb') as collection_file:
             depickler = pickle.Unpickler(collection_file)
             self.collection = depickler.load()
         self.generate_vocabulary()
@@ -79,25 +80,157 @@ class DocumentCollection(object):
         return len(self.collection)
 
 
+class MetaDocumentCollection(object):
+    """This class allows us to group collections in a single interface.
+    This makes it easier to use our collection properties for a significant
+    amount of data when files are splitted in multiple directories.
+    """
+
+    def __init__(self, data_dirpath='', name='', load_on_creation=False):
+        self.data_dirpath = data_dirpath
+        self.name = name
+        self.meta_collection = {}  # must contains DocumentCollection objects
+        if load_on_creation:
+            self.load_collection()
+            self.generate_vocabulary()
+
+    def save(self, dirpath):
+        for collection in self.meta_collection.values():
+            with open(os.path.join(dirpath, collection.name) + '.collection', 'wb') as collection_file:
+                pickler = pickle.Pickler(collection_file)
+                pickler.dump(collection)
+
+    def load_from_dir(self, dirpath):
+        for file in os.listdir(dirpath):
+            with open(os.path.join(dirpath, file), 'rb') as collection_file:
+                depickler = pickle.Unpickler(collection_file)
+                self.meta_collection[file] = depickler.load()
+        self.generate_vocabulary()
+
+    def load_collection(self):
+        raise NotImplementedError
+
+    def generate_vocabulary(self):
+        self._generate_vocabulary()
+        self._generate_vocabulary_size()
+        self._generate_token_number()
+
+    def generate_half_document_collection(self):
+        for coll in self.get_collections():
+            coll.collection = {
+                key: value
+                for key, value
+                in list(coll.collection.items())[:len(coll.collection) // 2]
+            }
+
+    def _generate_vocabulary(self):
+        self.vocabulary = {}
+        for collection in self.meta_collection.values():
+            for document in collection.values():
+                for attr in document.tokenized_fields:
+                    for token in getattr(document, attr):
+                        try:
+                            self.vocabulary[token] += 1
+                        except KeyError:
+                            self.vocabulary[token] = 1
+
+    def _generate_vocabulary_size(self):
+        self.vocabulary_size = len(self.vocabulary.keys())
+
+    def _generate_token_number(self):
+        self.token_number = 0
+        for frequence in self.vocabulary.values():
+            self.token_number += frequence
+
+    def __getitem__(self, key):
+        """This methods wraps the __getitem__ methods of self.collection"""
+        for collection in self.meta_collection.values():
+            try:
+                item = collection[key]
+                return item
+            except KeyError:
+                continue
+        raise KeyError
+
+    def __setitem__(self, key, value):
+        """This methods wraps the __setitem__ methods of self.collection"""
+        isSet = False
+        for collection in self.meta_collection.values():
+            try:
+                collection[key] = value
+                isSet = True
+            except KeyError:
+                continue
+        if not isSet:
+            raise KeyError
+
+    def __delitem__(self, key):
+        """This methods wraps the __delitem__ methods of self.collection"""
+        isDel = False
+        for collection in self.meta_collection.values():
+            try:
+                del self.collection[key]
+                isDel = True
+            except KeyError:
+                continue
+        if not isDel:
+            raise KeyError
+
+    def get_collections(self):
+        col = {}
+        for collection in self.meta_collection.values():
+            col[collection.name] = collection
+        return col.values()
+
+    def items(self):
+        """This methods wraps the items methods of self.collection"""
+        items = []
+        for collection in self.meta_collection.values():
+            items.append(collection.items())
+        return items
+
+    def values(self):
+        """This methods wraps the values methods of self.collection"""
+        values = []
+        for collection in self.meta_collection.values():
+            values.append(collection.values())
+        return values
+
+    def keys(self):
+        """This methods wraps the keys methods of self.collection"""
+        keys = []
+        for collection in self.meta_collection.values():
+            keys.append(collection.keys())
+        return keys
+
+    def __len__(self):
+        """This methods wraps the len methods of self.collection"""
+        length = 0
+        for collection in self.meta_collection.values():
+            length += len(collection)
+        return length
+
+
 class CACMDocumentCollection(DocumentCollection):
 
-    def __init__(self, data_filename='', stop_list_filename='', load_on_creation=False):
-        self.stop_list_filename = stop_list_filename
+    def __init__(self, source_data_filepath='', stop_list_filepath='', load_on_creation=False):
         self.common_words = []
+        self.stop_list_filepath = stop_list_filepath
+        self.name = 'cacm'
         if load_on_creation:
             # needs to be done before calling the load_collection method that
             # needs the common words to clean the tokens
             self.load_common_words()
-        super().__init__(data_filename, load_on_creation)
+        super().__init__(source_data_filepath, self.name, load_on_creation)
 
     def load_common_words(self):
-        with open(self.stop_list_filename, 'r') as sl:
+        with open(self.stop_list_filepath, 'r') as sl:
             data = sl.read()
 
         self.common_words = [line.strip() for line in data.split('\n')]
 
     def load_collection(self):
-        with open(self.data_filename, 'r') as df:
+        with open(self.source_data_filepath, 'r') as df:
             data = df.read()
 
         current_id = None
@@ -122,19 +255,26 @@ class CACMDocumentCollection(DocumentCollection):
         self.collection[current_id].clean_tokens(self.common_words)
 
 
-class StanfordDocumentCollection(DocumentCollection):
-    def load_collection(self):
-        for directory in os.listdir(self.data_filename):
-            print("DIRECTORY", directory)
-            for filename in os.listdir(self.data_filename + '/' + directory):
+class StanfordDocumentCollection(MetaDocumentCollection):
 
-                with open(self.data_filename + '/' + directory + '/' + filename, 'r')as df:
+    def __init__(self, data_dirpath='', load_on_creation=False):
+        self.name = 'cs276'
+        super().__init__(data_dirpath, self.name, load_on_creation)
+
+    def load_collection(self):
+        for directory in os.listdir(self.data_dirpath):
+            print("DIRECTORY", directory)
+            collection = DocumentCollection(name=directory)
+            for filename in os.listdir(os.path.join(self.data_dirpath, directory)):
+
+                with open(os.path.join(self.data_dirpath, directory, filename), 'r')as df:
                     data = df.read()
 
                 tokens = [token for token in data.split()]
 
                 # modify document collection to add the Stanford Document
-                self.collection[filename] = StanfordDocument(filename, tokens)
+                collection[filename] = StanfordDocument(filename, tokens)
+            self.meta_collection[directory] = collection
 
 
 class Document(object):

@@ -1,8 +1,8 @@
-from os import path
+from os import path, listdir
 
 import matplotlib.pyplot as plt
 
-from models.reverse_index import ReverseIndex
+from models.reverse_index import CACMReverseIndex
 from models.document import CACMDocumentCollection
 from models.request import VectorialRequest
 from models.measure import average_precision, precision, recall
@@ -10,12 +10,20 @@ from models.measure import average_precision, precision, recall
 
 if __name__ == '__main__':
     print('Loading index...')
-    collection = CACMDocumentCollection(
-        data_filename=path.join('Data', 'CACM', 'cacm.all'),
-        stop_list_filename=path.join('Data', 'CACM', 'common_words'),
-        load_on_creation=True
-    )
-    index = ReverseIndex(document_collection=collection)
+    if 'cacm.collection' in listdir(path.join('Data', 'Collection')):
+        collection = CACMDocumentCollection()
+        collection.load_from_file(path.join('Data', 'Collection', 'cacm.collection'))
+    else:
+        collection = CACMDocumentCollection(
+            source_data_filepath=path.join('Data', 'CACM', 'cacm.all'),
+            stop_list_filepath=path.join('Data', 'CACM', 'common_words'),
+            load_on_creation=True
+        )
+    if 'cacm.index' in listdir(path.join('Data', 'Index')):
+        index = CACMReverseIndex()
+        index.load_from_file(path.join('Data', 'Index', 'cacm.index'))
+    else:
+        index = CACMReverseIndex(document_collection=collection)
 
     print('Loading content of real queries...')
     qrels_filename = path.join('Data', 'CACM', 'qrels.text')
@@ -33,8 +41,8 @@ if __name__ == '__main__':
 
     print('Creating a request collection...')
     request_collection = CACMDocumentCollection(
-        data_filename=path.join('Data', 'CACM', 'query.text'),
-        stop_list_filename=path.join('Data', 'CACM', 'common_words'),
+        source_data_filepath=path.join('Data', 'CACM', 'query.text'),
+        stop_list_filepath=path.join('Data', 'CACM', 'common_words'),
         load_on_creation=True,
     )
 

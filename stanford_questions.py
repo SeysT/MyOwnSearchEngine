@@ -8,15 +8,15 @@ from models.document import StanfordDocumentCollection
 
 if __name__ == '__main__':
 
-    if 'cs276.collection' in os.listdir('Data/Collection'):
+    if os.listdir('Data/Collection/CS276'):
         document_collection = StanfordDocumentCollection(
-            data_filename='Data/CS276',
+            data_dirpath='Data/CS276',
             load_on_creation=False
         )
-        document_collection.load_from_file('Data/Collection/cs276.collection')
+        document_collection.load_from_dir('Data/Collection/CS276')
     else:
         document_collection = StanfordDocumentCollection(
-            data_filename='Data/CS276',
+            data_dirpath='Data/CS276',
             load_on_creation=True,
         )
 
@@ -30,11 +30,7 @@ if __name__ == '__main__':
     rank = np.array(list(range(1, len(frequence) + 1)))
 
     half_document_collection = document_collection
-    half_document_collection.collection = {
-        key: value
-        for key, value
-        in list(document_collection.items())[:len(document_collection) // 2]
-    }
+    half_document_collection.generate_half_document_collection()
     half_document_collection.generate_vocabulary()
 
     half_vocabulary = half_document_collection.vocabulary
