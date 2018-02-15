@@ -68,12 +68,32 @@ La construction de l'index inversé suit l'algo BSBI :
 
 
 ### Parsing de la requête (`engine.py`, `models/parser.py` et `models/request.py`)
-TODO
+Il existe deux manières de parser la requête de l'utilisateur. Si l'on utilise le modèle booléen, alors on parse sa requête comme une expression booléenne. Nous avons choisi d'utiliser les opérateurs !, && et || pour représenter les opérateurs NOT, AND et OR. Dans le cas du modèle vectoriel, la requête est simplement splittée sur les espaces.
 
 L'accès aux clefs de l'index inversé se fait par table de hachage (une table simple et peu volumineuse reliant un terme et son id attribué arbitrairement). Elle peut se faire soit directement en mémoire si l'index a été chargé (mais consommateur de ressources), soit directement dans le fichier json triés du disque.
 
 ### Pondération (`models/poderation.py` et `models/request.py`)
-TODO
+Toutes les fonctions de pondération pour le modèle vectoriel sont définies dans le fichier `models/ponderation.py`. Lorsque l'on fait une requête vectoriel il est possible de spécifier une fonction de ponderation pour le calcul du score de chaque document. Par défaut nous utilisons la fonction de ponderation logtf-idf normalisée (voir le résultats ci-dessous).
+
+Pour évaluer notre système de requête, nous avons utilisés les requêtes en languages naturels de la collection CACM fournies par l'énoncé. Pour cela nous avons le script `cacm_measures.py` qui calcule les différentes mesures implémentées dans le fichier `models/measures.py`. Les résultats présentés ci-dessous ont donc été générés en lançant la commande :
+
+```sh
+python cacm_measures.py
+```
+
+![cacm measures](https://raw.githubusercontent.com/SeysT/MyOwnSearchEngine/tseys/readme/Data/Answers/cacm_measures.png)
+
+Ponderation | Mean Average Precision | Mean R-Measure | Mean F-Measure | Mean E-Measure 
+------------|------------------------|-----------|-----------|----------
+tf_df | 0.0985 | 0.1989 | 0.0370 | 0.9630 |
+| only_tf | 0.0901 | 0.2029 | 0.0370 | 0.9630 |
+| only_logtf | 0.0924 | 0.2174 | 0.0370 | 0.9630 |
+| tf_idf | 0.1035 | 0.2329 | 0.0370 | 0.9630 |
+| tf_idf_normalized | 0.1034 | 0.2345 | 0.0370 | 0.9630 |
+| logtf_idf | 0.1077 | 0.2649 | 0.0370 | 0.9630 |
+| logtf_idf_normalized | 0.1079 | 0.2654 | 0.0370 | 0.9630 |
+| normalizedtf_df | 0.0970 | 0.1968 | 0.0370 | 0.9630 |
+| normalizedtf_df_normalized | 0.0965 | 0.1979 | 0.0370 | 0.9630 |
 
 ### Remarques
 Le projet n'est pas totalement optimisé par manque de temps mais voici des pistes d'améliorations que nous avons exploré sans les finaliser :
