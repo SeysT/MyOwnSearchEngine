@@ -1,6 +1,6 @@
 all: install
 
-install: cacm cs276 build clean
+install: cacm cs276 build
 
 requirements:
 	pip install -r requirements.txt

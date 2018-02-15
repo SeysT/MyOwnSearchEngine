@@ -9,17 +9,13 @@ from models.document import CACMDocumentCollection
 
 if __name__ == '__main__':
 
-    if 'cacm.collection' in os.listdir('Data/Collection'):
-        document_collection = CACMDocumentCollection(
-            source_data_filepath='Data/CACM/cacm.all',
-            stop_list_filepath='Data/CACM/common_words',
-            load_on_creation=False,
-        )
-        document_collection.load_from_file('Data/Collection/cacm.collection')
+    if 'cacm.collection' in os.listdir(os.path.join('Data', 'Collection')):
+        document_collection = CACMDocumentCollection()
+        document_collection.load_from_file(os.path.join('Data', 'Collection', 'cacm.collection'))
     else:
         document_collection = CACMDocumentCollection(
-            source_data_filepath='Data/CACM/cacm.all',
-            stop_list_filepath='Data/CACM/common_words',
+            source_data_filepath=os.path.join('Data', 'CACM', 'cacm.all'),
+            stop_list_filepath=os.path.join('Data', 'CACM', 'common_words'),
             load_on_creation=True,
         )
 

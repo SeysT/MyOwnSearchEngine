@@ -8,15 +8,12 @@ from models.document import StanfordDocumentCollection
 
 if __name__ == '__main__':
 
-    if os.listdir('Data/Collection/CS276'):
-        document_collection = StanfordDocumentCollection(
-            data_dirpath='Data/CS276',
-            load_on_creation=False
-        )
-        document_collection.load_from_dir('Data/Collection/CS276')
+    if os.listdir(os.path.join('Data', 'Collection', 'CS276')):
+        document_collection = StanfordDocumentCollection()
+        document_collection.load_from_dir(os.path.join('Data', 'Collection', 'CS276'))
     else:
         document_collection = StanfordDocumentCollection(
-            data_dirpath='Data/CS276',
+            data_dirpath=os.path.join('Data', 'CS276'),
             load_on_creation=True,
         )
 

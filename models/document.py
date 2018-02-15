@@ -154,26 +154,26 @@ class MetaDocumentCollection(object):
 
     def __setitem__(self, key, value):
         """This methods wraps the __setitem__ methods of self.collection"""
-        isSet = False
+        is_set = False
         for collection in self.meta_collection.values():
             try:
                 collection[key] = value
-                isSet = True
+                is_set = True
             except KeyError:
                 continue
-        if not isSet:
+        if not is_set:
             raise KeyError
 
     def __delitem__(self, key):
         """This methods wraps the __delitem__ methods of self.collection"""
-        isDel = False
+        is_del = False
         for collection in self.meta_collection.values():
             try:
                 del self.collection[key]
-                isDel = True
+                is_del = True
             except KeyError:
                 continue
-        if not isDel:
+        if not is_del:
             raise KeyError
 
     def get_collections(self):
@@ -361,5 +361,5 @@ class StanfordDocument(Document):
     def __repr__(self):
         return "DOCID : {}\n CONTENT: {}\n".format(
             self.id,
-            self.content
+            ' '.join(self.content)
         )
