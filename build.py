@@ -15,7 +15,7 @@ if __name__ == '__main__':
             stop_list_filepath=path.join('Data', 'CACM', 'common_words'),
             load_on_creation=True
         )
-        cacm_document_collection.save('Data/Collection/cacm.collection')
+        cacm_document_collection.save(path.join('Data', 'Collection', 'cacm.collection'))
 
     print("======= Loading collection time : ", datetime.now() - begin, " =======")
     cacm_reverse_index = CACMReverseIndex(cacm_document_collection)

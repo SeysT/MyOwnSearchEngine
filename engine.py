@@ -147,9 +147,9 @@ if __name__ == '__main__':
 
     start_time = time()
     request = (
-        VectorialRequest(args['<request>'])
+        VectorialRequest(reverse_index, collection)
         if args['vectorial']
-        else BooleanRequest(args['<request>'])
+        else BooleanRequest(reverse_index, collection)
     )
     results = request.return_results(reverse_index)
     duration = time() - start_time

@@ -96,7 +96,8 @@ class ReverseIndex(object):
         if self.index_in_memory:
             return self.reverse_index[term_id]
         else:
-            line = linecache.getline(os.path.join('Data', 'Index',  self.name) + '.index', term_id)
+            # entry is like (term_id, [frequence_col, [(document_id, frequence_doc, doc_len)...]])
+            line = linecache.getline(os.path.join('Data', 'Index',  self.name) + '.index', term_id + 1)
             entry = json.loads(line)
             return entry[1]
 
@@ -226,12 +227,12 @@ class Mapper(object):
                 try:
                     term_id_dict[term_id][0] += 1
                     term_id_dict[term_id][1].append(
-                        (doc.id, frequence, len(doc.term_bag))
+                        (doc.id, frequence)
                     )
                 except KeyError:
                     term_id_dict[term_id] = [
                         1,
-                        [(doc.id, frequence, len(doc.term_bag))]
+                        [(doc.id, frequence)]
                     ]
 
         # all the elements from the collection are in the dictionnary, we now
@@ -294,7 +295,7 @@ class Reducer(object):
                     new_entry[1][0] += entry[1][0]
                     for posting in entry[1][1]:
                         new_entry[1][1].append(
-                            (posting[0], posting[1], posting[2])
+                            (posting[0], posting[1])
                         )
 
                 output_file.write(json.dumps(new_entry))
