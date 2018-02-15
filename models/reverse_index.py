@@ -10,7 +10,7 @@ class ReverseIndex(object):
     This class contains our model for our reverse index
     + attributes:
         - reverse_index: contains the reverse index with the following structure:
-            {term: [frequence_col, [(document_id, frequence_doc, doc_len)...]]}
+            {term: [frequence_col, [(document_id, frequence_doc)...]]}
         - term_dict: dict that contains all the terms of all the documents and
         their affected id under the form {term: id} (~ hashing table)
         - term_id: attribute used to keep track of the last attributed id
@@ -360,7 +360,7 @@ class Buffers(object):
                     self.empty_buffers.add(i)
                     print("EMPTY BUFFERS", self.empty_buffers, len(self.empty_buffers), len(self.files))
                     continue
-                # converts the string to object : (term_id, [frequence_col, [(document_id, frequence_doc, doc_len)...]])
+                # converts the string to object : (term_id, [frequence_col, [(document_id, frequence_doc)...]])
                 self.buffers[i] = json.loads(line)
         if self.isEmpty:
             return False

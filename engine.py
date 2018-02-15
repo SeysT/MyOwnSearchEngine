@@ -151,7 +151,7 @@ if __name__ == '__main__':
         if args['vectorial']
         else BooleanRequest(reverse_index, collection)
     )
-    results = request.return_results(reverse_index)
+    results = request.return_results(args['<request>'])
     duration = time() - start_time
 
     if args['cacm']:

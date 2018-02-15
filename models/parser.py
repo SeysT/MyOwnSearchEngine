@@ -99,8 +99,8 @@ class NotNode(UnaryNode):
         """
         all_posting_ids = {
             posting_id
-            for _, posting_list in index.values()
-            for posting_id, _, _ in posting_list
+            for term_id in index.keys()
+            for posting_id, _ in index[term_id][1]
         }
         return all_posting_ids.difference(self.expression.eval(index))
 
@@ -120,7 +120,7 @@ class RoleNode(Node):
         Implements the eval function for RoleNode.
         Return all posting_ids associated to self.role_name.
         """
-        return {posting_id for posting_id, _, _, in index[self.role_name][1]}
+        return {posting_id for posting_id, _, in index[self.role_name][1]}
 
     def __str__(self):
         return str(self.role_name)
