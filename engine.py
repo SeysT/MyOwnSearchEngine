@@ -104,11 +104,11 @@ if __name__ == '__main__':
 
     start_time = time()
     request = (
-        VectorialRequest(args['<request>'])
+        VectorialRequest(reverse_index, collection)
         if args['vectorial']
-        else BooleanRequest(args['<request>'])
+        else BooleanRequest(reverse_index, collection)
     )
-    results = request.return_results(reverse_index)
+    results = request.return_results(args['<request>'])
     duration = (time() - start_time) * 1000
 
     print('We have found {} results in {:.2f} milliseconds.'.format(len(results), duration))

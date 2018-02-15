@@ -54,7 +54,10 @@ def e_measure(relevant_documents, found_documents, alpha=0.5):
     """
     p = precision(relevant_documents, found_documents)
     r = recall(relevant_documents, found_documents)
-    return 1 - (1 / (alpha * (1 / p) + (1 - alpha) * (1 / r)))
+    try:
+        return 1 - (1 / (alpha * (1 / p) + (1 - alpha) * (1 / r)))
+    except ZeroDivisionError:
+        return 1
 
 
 def f_measure(relevant_documents, found_documents, alpha=0.5):

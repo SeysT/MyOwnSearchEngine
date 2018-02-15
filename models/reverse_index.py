@@ -227,12 +227,12 @@ class Mapper(object):
                 try:
                     term_id_dict[term_id][0] += 1
                     term_id_dict[term_id][1].append(
-                        (doc.id, frequence, len(doc.term_bag))
+                        (doc.id, frequence)
                     )
                 except KeyError:
                     term_id_dict[term_id] = [
                         1,
-                        [(doc.id, frequence, len(doc.term_bag))]
+                        [(doc.id, frequence)]
                     ]
 
         # all the elements from the collection are in the dictionnary, we now
@@ -295,7 +295,7 @@ class Reducer(object):
                     new_entry[1][0] += entry[1][0]
                     for posting in entry[1][1]:
                         new_entry[1][1].append(
-                            (posting[0], posting[1], posting[2])
+                            (posting[0], posting[1])
                         )
 
                 output_file.write(json.dumps(new_entry))
