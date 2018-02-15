@@ -81,7 +81,7 @@ Pour évaluer notre système de requête, nous avons utilisés les requêtes en 
 python cacm_measures.py
 ```
 
-![cacm measures](https://raw.githubusercontent.com/SeysT/MyOwnSearchEngine/tseys/readme/Data/Answers/cacm_measures.png)
+![cacm measures](https://github.com/SeysT/MyOwnSearchEngine/blob/master/Data/Answers/cacm_measures.png)
 
 Ponderation | Mean Average Precision | Mean R-Measure | Mean F-Measure | Mean E-Measure 
 ------------|------------------------|-----------|-----------|----------
