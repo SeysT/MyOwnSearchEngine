@@ -75,14 +75,14 @@ if __name__ == '__main__':
                 duration
             ))
         else:
-            if 'cacm.index' in listdir(path.join('Data', 'Index')):
-                print('Using default file {} for index...'.format(
-                    path.join('Data', 'Index', 'cacm.index')
+            if 'cacm.hash' in listdir(path.join('Data', 'Index')):
+                print('Using default Hash Table {} for index...'.format(
+                    path.join('Data', 'Index', 'cacm.hash')
                 ))
                 reverse_index = CACMReverseIndex()
-                reverse_index.load_from_file(path.join('Data', 'Index', 'cacm.index'))
+                reverse_index.load_hash_table()
                 duration = (time() - start_time) * 1000
-                print('Index has been loaded in {:.2f} milliseconds.'.format(duration))
+                print('Hash Table has been loaded in {:.2f} milliseconds.'.format(duration))
             else:
                 print('No default index found, building it...')
                 reverse_index = CACMReverseIndex(document_collection=collection)
@@ -130,7 +130,7 @@ if __name__ == '__main__':
         else:
             if 'cs276.hash' in listdir(path.join('Data', 'Index')):
                 print('Using default Hash Table {} for index...'.format(
-                    path.join('Data', 'Index')
+                    path.join('Data', 'Index', 'cs276.hash')
                 ))
                 reverse_index = StanfordReverseIndex()
                 reverse_index.load_hash_table()
@@ -143,6 +143,7 @@ if __name__ == '__main__':
                 reverse_index = StanfordReverseIndex(collection)
                 duration = time() - start_time
                 print('Index has been creadted in {:.2f} seconds.'.format(duration))
+                reverse_index.save(path.join('Data', 'Index', 'cs276.index'))
 
     start_time = time()
     request = (
