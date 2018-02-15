@@ -27,7 +27,7 @@ if __name__ == '__main__':
         stanford_document_collection.load_from_dir(path.join('Data', 'Collection', 'CS276'))
     else:
         stanford_document_collection = StanfordDocumentCollection(
-            data_dirpath='Data/CS276',
+            data_dirpath=path.join('Data', 'CS276'),
             load_on_creation=True,
         )
         stanford_document_collection.save(path.join('Data', 'Collection', 'CS276'))
