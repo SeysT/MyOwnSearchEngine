@@ -259,6 +259,7 @@ class StanfordDocumentCollection(MetaDocumentCollection):
 
     def __init__(self, data_dirpath='', load_on_creation=False):
         self.name = 'cs276'
+        self.current_doc_id = 0
         super().__init__(data_dirpath, self.name, load_on_creation)
 
     def load_collection(self):
@@ -273,7 +274,12 @@ class StanfordDocumentCollection(MetaDocumentCollection):
                 tokens = [token for token in data.split()]
 
                 # modify document collection to add the Stanford Document
-                collection[filename] = StanfordDocument(filename, tokens)
+                collection[self.current_doc_id] = StanfordDocument(
+                    self.current_doc_id,
+                    filename,
+                    tokens
+                )
+                self.current_doc_id += 1
             self.meta_collection[directory] = collection
 
 
@@ -354,12 +360,14 @@ class StanfordDocument(Document):
         'content'
     ]
 
-    def __init__(self, id, content):
+    def __init__(self, id, title, content):
         super().__init__(id)
         self.content = content
+        self.title = title
 
     def __repr__(self):
-        return "DOCID : {}\n CONTENT: {}\n".format(
+        return "DOCID : {}\nTITLE : {}\nCONTENT: {}\n".format(
             self.id,
+            self.title,
             ' '.join(self.content)
         )
